@@ -1,0 +1,11 @@
+[workspace]
+publish = false
+release = false
+changelog_update = false
+
+[[package]]
+name = "edc-connector-client"
+publish = true
+release = true
+changelog_update = true
+

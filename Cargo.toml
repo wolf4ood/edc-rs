@@ -1,0 +1,15 @@
+[workspace]
+resolver="2"
+members = [
+    "edc-connector-client"
+]
+
+[workspace.dependencies]
+thiserror = "1.0"
+async-trait = "0.1.68"
+tracing = "0.1.37"
+serde={version = "1", features= ["derive"]}
+serde_json= "1"
+serde_with= "3.7.0"
+tokio= {version="1", features=["full"]}
+uuid = { version ="1", features = ["v4"] }

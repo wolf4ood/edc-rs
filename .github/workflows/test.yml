@@ -1,0 +1,45 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - "*"
+  pull_request:
+    branches:
+      - main
+      - release-plz/*
+
+jobs:
+  build_and_test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        rust: [stable]
+    steps:
+
+      - uses: actions/checkout@v2
+      - name: Starting EDC Servers
+        run: |
+          docker compose -f ./testing/docker-compose.yml up -d
+
+      - uses: actions/checkout@v2
+      - name: Install latest ${{ matrix.rust }}
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust }}
+          profile: minimal
+          override: true
+          components: rustfmt
+
+      - name: Run cargo fmt
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+      - name: Run cargo test with tokio
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --manifest-path edc-connector-client/Cargo.toml  
