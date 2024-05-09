@@ -1,11 +1,14 @@
 use std::io;
 mod app;
+mod config;
 mod constants;
 
 use app::App;
+use config::{default_file, Config};
 
 #[tokio::main]
-async fn main() -> io::Result<()> {
+async fn main() -> anyhow::Result<()> {
+    let config = Config::parse(&default_file()?)?;
     tui::install_panic_hook();
     let terminal = tui::init_terminal()?;
     App::new().run(terminal).await?;

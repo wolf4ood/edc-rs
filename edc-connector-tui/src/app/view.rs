@@ -15,7 +15,6 @@ use super::App;
 impl App {
     pub fn view(&self, f: &mut Frame) {
         let main = self.main_layout(f);
-
         f.render_widget(self.header(), main[0]);
         f.render_widget(self.body(), main[1]);
         f.render_widget(self.footer(), main[2]);
@@ -30,10 +29,7 @@ impl App {
     }
 
     fn body(&self) -> Block {
-        let styled_text = Span::styled(
-            "Connectors",
-            Style::default().fg(Color::Red).bg(Color::Yellow),
-        );
+        let styled_text = Span::styled(" Connectors ", Style::default().fg(Color::Red));
         Block::default()
             .title(Title::from(styled_text).alignment(Alignment::Center))
             .border_type(BorderType::Rounded)
@@ -51,7 +47,7 @@ impl App {
             .constraints(
                 [
                     Constraint::Percentage(15),
-                    Constraint::Percentage(85),
+                    Constraint::Percentage(80),
                     Constraint::Percentage(5),
                 ]
                 .as_ref(),
