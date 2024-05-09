@@ -14,7 +14,6 @@ pub struct TransferRequest {
     protocol: String,
     counter_party_address: String,
     contract_id: String,
-    asset_id: String,
     transfer_type: String,
     data_destination: Option<DataAddress>,
     callback_addresses: Vec<CallbackAddress>,
@@ -32,7 +31,6 @@ pub struct TransferRequestBuilder {
     counter_party_address: Option<String>,
     contract_id: Option<String>,
     transfer_type: Option<String>,
-    asset_id: Option<String>,
     data_destination: Option<DataAddress>,
     callback_addresses: Vec<CallbackAddress>,
 }
@@ -58,11 +56,6 @@ impl TransferRequestBuilder {
         self
     }
 
-    pub fn asset_id(mut self, asset_id: &str) -> Self {
-        self.asset_id = Some(asset_id.to_string());
-        self
-    }
-
     pub fn destination(mut self, destination: DataAddress) -> Self {
         self.data_destination = Some(destination);
         self
@@ -84,9 +77,6 @@ impl TransferRequestBuilder {
             contract_id: self
                 .contract_id
                 .ok_or_else(|| BuilderError::missing_property("contract_id"))?,
-            asset_id: self
-                .asset_id
-                .ok_or_else(|| BuilderError::missing_property("asset_id"))?,
             transfer_type: self
                 .transfer_type
                 .ok_or_else(|| BuilderError::missing_property("transfer_type"))?,

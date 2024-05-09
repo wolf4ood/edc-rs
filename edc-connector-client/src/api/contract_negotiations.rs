@@ -23,7 +23,7 @@ impl<'a> ContractNegotiationApi<'a> {
         &self,
         contract_request: &ContractRequest,
     ) -> EdcResult<IdResponse<String>> {
-        let url = format!("{}/v2/contractnegotiations", self.0.management_url);
+        let url = format!("{}/v3/contractnegotiations", self.0.management_url);
         self.0
             .post::<_, WithContext<IdResponse<String>>>(
                 url,
@@ -34,7 +34,7 @@ impl<'a> ContractNegotiationApi<'a> {
     }
 
     pub async fn get(&self, id: &str) -> EdcResult<ContractNegotiation> {
-        let url = format!("{}/v2/contractnegotiations/{}", self.0.management_url, id);
+        let url = format!("{}/v3/contractnegotiations/{}", self.0.management_url, id);
         self.0
             .get::<WithContext<ContractNegotiation>>(url)
             .await
@@ -42,7 +42,7 @@ impl<'a> ContractNegotiationApi<'a> {
     }
 
     pub async fn get_state(&self, id: &str) -> EdcResult<ContractNegotiationState> {
-        let url = format!("{}/v2/contractnegotiations/{}", self.0.management_url, id);
+        let url = format!("{}/v3/contractnegotiations/{}", self.0.management_url, id);
         self.0
             .get::<WithContext<NegotiationState>>(url)
             .await
@@ -51,7 +51,7 @@ impl<'a> ContractNegotiationApi<'a> {
 
     pub async fn terminate(&self, id: &str, reason: &str) -> EdcResult<()> {
         let url = format!(
-            "{}/v2/contractnegotiations/{}/terminate",
+            "{}/v3/contractnegotiations/{}/terminate",
             self.0.management_url, id
         );
 
@@ -66,7 +66,7 @@ impl<'a> ContractNegotiationApi<'a> {
     }
 
     pub async fn query(&self, query: Query) -> EdcResult<Vec<ContractNegotiation>> {
-        let url = format!("{}/v2/contractnegotiations/request", self.0.management_url);
+        let url = format!("{}/v3/contractnegotiations/request", self.0.management_url);
         self.0
             .post::<_, Vec<WithContext<ContractNegotiation>>>(
                 url,

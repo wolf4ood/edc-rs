@@ -74,7 +74,7 @@ pub enum SortOrder {
     Desc,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Criterion {
     operand_left: String,

@@ -1,19 +1,21 @@
-use serde::{Deserialize, Serialize};
-
 use crate::{BuilderError, ConversionError};
+use serde::{Deserialize, Serialize};
+use serde_with::{formats::PreferMany, serde_as, OneOrMany};
 
 use super::{
     properties::{FromValue, Properties, ToValue},
     query::Criterion,
 };
 
-#[derive(Debug, Serialize, Deserialize)]
+#[serde_as]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ContractDefinition {
     #[serde(rename = "@id")]
     id: String,
     access_policy_id: String,
     contract_policy_id: String,
+    #[serde_as(deserialize_as = "OneOrMany<_, PreferMany>")]
     #[serde(default)]
     assets_selector: Vec<Criterion>,
     #[serde(default)]

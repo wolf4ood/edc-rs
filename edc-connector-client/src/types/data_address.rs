@@ -4,7 +4,7 @@ use crate::{error::BuilderError, ConversionError};
 
 use super::properties::{FromValue, Properties, ToValue};
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct DataAddress(Properties);
 
 impl DataAddress {

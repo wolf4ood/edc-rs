@@ -15,7 +15,7 @@ impl<'a> CatalogApi<'a> {
     }
 
     pub async fn request(&self, request: &CatalogRequest) -> EdcResult<Catalog> {
-        let url = format!("{}/v2/catalog/request", self.0.management_url);
+        let url = format!("{}/v3/catalog/request", self.0.management_url);
         self.0
             .post::<_, WithContext<Catalog>>(url, &WithContextRef::default_context(request))
             .await
@@ -23,7 +23,7 @@ impl<'a> CatalogApi<'a> {
     }
 
     pub async fn dataset(&self, request: &DatasetRequest) -> EdcResult<Dataset> {
-        let url = format!("{}/v2/catalog/dataset/request", self.0.management_url);
+        let url = format!("{}/v3/catalog/dataset/request", self.0.management_url);
         self.0
             .post::<_, WithContext<Dataset>>(url, &WithContextRef::default_context(request))
             .await

@@ -1,7 +1,8 @@
 [workspace]
 resolver="2"
 members = [
-    "edc-connector-client"
+    "edc-connector-client",
+    "edc-connector-tui"
 ]
 
 [workspace.dependencies]

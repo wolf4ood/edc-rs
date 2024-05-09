@@ -23,7 +23,7 @@ impl<'a> TransferProcessApi<'a> {
         &self,
         transfer_request: &TransferRequest,
     ) -> EdcResult<IdResponse<String>> {
-        let url = format!("{}/v2/transferprocesses", self.0.management_url);
+        let url = format!("{}/v3/transferprocesses", self.0.management_url);
         self.0
             .post::<_, WithContext<IdResponse<String>>>(
                 url,
@@ -34,7 +34,7 @@ impl<'a> TransferProcessApi<'a> {
     }
 
     pub async fn get(&self, id: &str) -> EdcResult<TransferProcess> {
-        let url = format!("{}/v2/transferprocesses/{}", self.0.management_url, id);
+        let url = format!("{}/v3/transferprocesses/{}", self.0.management_url, id);
         self.0
             .get::<WithContext<TransferProcess>>(url)
             .await
@@ -42,7 +42,7 @@ impl<'a> TransferProcessApi<'a> {
     }
 
     pub async fn get_state(&self, id: &str) -> EdcResult<TransferProcessState> {
-        let url = format!("{}/v2/transferprocesses/{}", self.0.management_url, id);
+        let url = format!("{}/v3/transferprocesses/{}", self.0.management_url, id);
         self.0
             .get::<WithContext<TransferState>>(url)
             .await
@@ -50,7 +50,7 @@ impl<'a> TransferProcessApi<'a> {
     }
 
     pub async fn query(&self, query: Query) -> EdcResult<Vec<TransferProcess>> {
-        let url = format!("{}/v2/transferprocesses/request", self.0.management_url);
+        let url = format!("{}/v3/transferprocesses/request", self.0.management_url);
         self.0
             .post::<_, Vec<WithContext<TransferProcess>>>(
                 url,
@@ -62,7 +62,7 @@ impl<'a> TransferProcessApi<'a> {
 
     pub async fn terminate(&self, id: &str, reason: &str) -> EdcResult<()> {
         let url = format!(
-            "{}/v2/transferprocesses/{}/terminate",
+            "{}/v3/transferprocesses/{}/terminate",
             self.0.management_url, id
         );
 
@@ -78,7 +78,7 @@ impl<'a> TransferProcessApi<'a> {
 
     pub async fn suspend(&self, id: &str, reason: &str) -> EdcResult<()> {
         let url = format!(
-            "{}/v2/transferprocesses/{}/suspend",
+            "{}/v3/transferprocesses/{}/suspend",
             self.0.management_url, id
         );
 
@@ -94,7 +94,7 @@ impl<'a> TransferProcessApi<'a> {
 
     pub async fn resume(&self, id: &str) -> EdcResult<()> {
         let url = format!(
-            "{}/v2/transferprocesses/{}/resume",
+            "{}/v3/transferprocesses/{}/resume",
             self.0.management_url, id
         );
 

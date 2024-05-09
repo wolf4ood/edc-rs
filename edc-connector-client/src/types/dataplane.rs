@@ -1,86 +1,63 @@
-use std::collections::HashSet;
+use serde::Deserialize;
+use serde_with::{formats::PreferMany, serde_as, OneOrMany};
 
-use serde::{Deserialize, Serialize};
+use super::properties::Properties;
 
-use crate::BuilderError;
-
-use super::properties::{Properties, ToValue};
-
-#[derive(Debug, Deserialize, Serialize)]
+#[serde_as]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DataPlaneInstance {
     #[serde(rename = "@id")]
     id: String,
     url: String,
-    allowed_source_types: HashSet<String>,
-    allowed_dest_types: HashSet<String>,
-    allowed_transfer_types: HashSet<String>,
+    #[serde_as(deserialize_as = "OneOrMany<_, PreferMany>")]
+    allowed_source_types: Vec<String>,
+    #[serde_as(deserialize_as = "OneOrMany<_, PreferMany>")]
+    allowed_dest_types: Vec<String>,
+    #[serde_as(deserialize_as = "OneOrMany<_, PreferMany>")]
+    allowed_transfer_types: Vec<String>,
+    state: DataPlaneInstanceState,
+    #[serde(default)]
     properties: Properties,
 }
 
 impl DataPlaneInstance {
-    pub fn builder() -> DataPlaneInstanceBuilder {
-        DataPlaneInstanceBuilder::default()
+    pub fn id(&self) -> &str {
+        &self.id
+    }
+
+    pub fn url(&self) -> &str {
+        &self.url
+    }
+
+    pub fn allowed_source_types(&self) -> &Vec<String> {
+        &self.allowed_source_types
+    }
+
+    pub fn allowed_dest_types(&self) -> &Vec<String> {
+        &self.allowed_dest_types
+    }
+
+    pub fn allowed_transfer_types(&self) -> &Vec<String> {
+        &self.allowed_transfer_types
+    }
+
+    pub fn state(&self) -> &DataPlaneInstanceState {
+        &self.state
+    }
+
+    pub fn properties(&self) -> &Properties {
+        &self.properties
     }
 }
 
-#[derive(Debug, Default)]
-pub struct DataPlaneInstanceBuilder {
-    id: Option<String>,
-    url: Option<String>,
-    properties: Properties,
-    allowed_source_types: HashSet<String>,
-    allowed_dest_types: HashSet<String>,
-    allowed_transfer_types: HashSet<String>,
-}
-
-impl DataPlaneInstanceBuilder {
-    pub fn id(mut self, id: &str) -> Self {
-        self.id = Some(id.to_string());
-        self
-    }
-
-    pub fn url(mut self, url: &str) -> Self {
-        self.url = Some(url.to_string());
-        self
-    }
-
-    pub fn property<T>(mut self, property: &str, value: T) -> Self
-    where
-        T: ToValue,
-    {
-        self.properties.set(property, value);
-        self
-    }
-
-    pub fn allowed_destination_type(mut self, dest_type: &str) -> Self {
-        self.allowed_dest_types.insert(dest_type.to_string());
-        self
-    }
-
-    pub fn allowed_source_type(mut self, source_type: &str) -> Self {
-        self.allowed_source_types.insert(source_type.to_string());
-        self
-    }
-
-    pub fn allowed_transfer_type(mut self, transfer_type: &str) -> Self {
-        self.allowed_transfer_types
-            .insert(transfer_type.to_string());
-        self
-    }
-
-    pub fn build(self) -> Result<DataPlaneInstance, BuilderError> {
-        Ok(DataPlaneInstance {
-            id: self
-                .id
-                .ok_or_else(|| BuilderError::missing_property("id"))?,
-            url: self
-                .url
-                .ok_or_else(|| BuilderError::missing_property("url"))?,
-            allowed_source_types: self.allowed_source_types,
-            allowed_dest_types: self.allowed_dest_types,
-            allowed_transfer_types: self.allowed_transfer_types,
-            properties: self.properties,
-        })
-    }
+#[derive(Debug, Deserialize, Clone, PartialEq)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum DataPlaneInstanceState {
+    Available,
+    Registered,
+    Unavailable,
+    Unregistered,
+    #[serde(untagged)]
+    Other(String),
 }

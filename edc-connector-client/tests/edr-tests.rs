@@ -4,22 +4,13 @@ mod get {
 
     use edc_connector_client::types::transfer_process::TransferProcessState;
 
-    use crate::common::{
-        seed_data_plane, setup_consumer_client, setup_provider_client, wait_for_transfer_state,
-    };
     use crate::common::{seed_transfer_process, wait_for};
+    use crate::common::{setup_consumer_client, setup_provider_client, wait_for_transfer_state};
 
     #[tokio::test]
     async fn should_receive_an_edr_in_cache() {
         let provider = setup_provider_client();
         let consumer = setup_consumer_client();
-
-        seed_data_plane(
-            &provider,
-            "dataplane",
-            "http://provider-connector:9192/control/transfer",
-        )
-        .await;
 
         let (transfer_process_id, agreement_id, _, asset_id) =
             seed_transfer_process(&consumer, &provider).await;
@@ -45,22 +36,13 @@ mod query {
     use edc_connector_client::types::query::Query;
     use edc_connector_client::types::transfer_process::TransferProcessState;
 
-    use crate::common::{
-        seed_data_plane, setup_consumer_client, setup_provider_client, wait_for_transfer_state,
-    };
     use crate::common::{seed_transfer_process, wait_for};
+    use crate::common::{setup_consumer_client, setup_provider_client, wait_for_transfer_state};
 
     #[tokio::test]
     async fn should_query_the_edr_cache() {
         let provider = setup_provider_client();
         let consumer = setup_consumer_client();
-
-        seed_data_plane(
-            &provider,
-            "dataplane",
-            "http://provider-connector:9192/control/transfer",
-        )
-        .await;
 
         let (transfer_process_id, _, _, asset_id) =
             seed_transfer_process(&consumer, &provider).await;
@@ -91,22 +73,13 @@ mod delete {
     use edc_connector_client::{Error, ManagementApiError, ManagementApiErrorDetailKind};
     use reqwest::StatusCode;
 
-    use crate::common::{
-        seed_data_plane, setup_consumer_client, setup_provider_client, wait_for_transfer_state,
-    };
     use crate::common::{seed_transfer_process, wait_for};
+    use crate::common::{setup_consumer_client, setup_provider_client, wait_for_transfer_state};
 
     #[tokio::test]
     async fn should_delete_a_cached_edr() {
         let provider = setup_provider_client();
         let consumer = setup_consumer_client();
-
-        seed_data_plane(
-            &provider,
-            "dataplane",
-            "http://provider-connector:9192/control/transfer",
-        )
-        .await;
 
         let (transfer_process_id, _, _, _) = seed_transfer_process(&consumer, &provider).await;
 

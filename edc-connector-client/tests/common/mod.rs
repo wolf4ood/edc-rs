@@ -9,7 +9,6 @@ use edc_connector_client::{
         contract_definition::NewContractDefinition,
         contract_negotiation::{ContractNegotiationState, ContractRequest},
         data_address::DataAddress,
-        dataplane::DataPlaneInstance,
         policy::{NewPolicyDefinition, Policy, PolicyKind},
         query::Criterion,
         transfer_process::{TransferProcessState, TransferRequest},
@@ -192,7 +191,6 @@ pub async fn seed_transfer_process(
     let request = TransferRequest::builder()
         .counter_party_address(PROVIDER_PROTOCOL)
         .contract_id(&agreement_id)
-        .asset_id(&asset_id)
         .transfer_type("HttpData-PULL")
         .destination(DataAddress::builder().kind("HttpProxy").build().unwrap())
         .build()
@@ -210,19 +208,6 @@ pub async fn seed_transfer_process(
         contract_negotiation_id,
         asset_id,
     )
-}
-
-pub async fn seed_data_plane(client: &EdcConnectorClient, id: &str, url: &str) {
-    let dataplane = DataPlaneInstance::builder()
-        .id(id)
-        .url(url)
-        .allowed_transfer_type("HttpData-PULL")
-        .allowed_source_type("HttpData")
-        .allowed_destination_type("HttpProxy")
-        .property("publicApiUrl", "http://provider-connector:9291/public/")
-        .build()
-        .unwrap();
-    client.data_planes().register(&dataplane).await.unwrap();
 }
 
 pub async fn wait_for_negotiation_state(

@@ -1,9 +1,8 @@
 use crate::{
     client::EdcConnectorClientInternal,
     types::{
-        context::{WithContext, WithContextRef},
+        context::WithContext,
         dataplane::DataPlaneInstance,
-        response::IdResponse,
     },
     EdcResult,
 };
@@ -15,14 +14,11 @@ impl<'a> DataPlaneApi<'a> {
         DataPlaneApi(client)
     }
 
-    pub async fn register(&self, data_plane: &DataPlaneInstance) -> EdcResult<IdResponse<String>> {
-        let url = format!("{}/v2/dataplanes", self.0.management_url);
+    pub async fn list(&self) -> EdcResult<Vec<DataPlaneInstance>> {
+        let url = format!("{}/v3/dataplanes", self.0.management_url);
         self.0
-            .post::<_, WithContext<IdResponse<String>>>(
-                url,
-                &WithContextRef::default_context(data_plane),
-            )
+            .get::<Vec<WithContext<DataPlaneInstance>>>(url)
             .await
-            .map(|ctx| ctx.inner)
+            .map(|results| results.into_iter().map(|ctx| ctx.inner).collect())
     }
 }

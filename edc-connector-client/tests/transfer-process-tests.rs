@@ -1,16 +1,19 @@
 mod common;
 
 mod initiate {
-    use edc_connector_client::types::{
-        data_address::DataAddress,
-        transfer_process::{TransferProcessState, TransferRequest},
+    use edc_connector_client::{
+        types::{
+            data_address::DataAddress,
+            transfer_process::{TransferProcessState, TransferRequest},
+        },
+        Error, ManagementApiError, ManagementApiErrorDetailKind,
     };
+    use reqwest::StatusCode;
     use uuid::Uuid;
 
     use crate::common::seed_contract_agreement;
     use crate::common::{
-        seed_data_plane, setup_consumer_client, setup_provider_client, wait_for_transfer_state,
-        PROVIDER_PROTOCOL,
+        setup_consumer_client, setup_provider_client, wait_for_transfer_state, PROVIDER_PROTOCOL,
     };
 
     #[tokio::test]
@@ -18,20 +21,12 @@ mod initiate {
         let provider = setup_provider_client();
         let consumer = setup_consumer_client();
 
-        seed_data_plane(
-            &provider,
-            "dataplane",
-            "http://provider-connector:9192/control/transfer",
-        )
-        .await;
-
-        let (agreement_id, _, asset_id) = seed_contract_agreement(&consumer, &provider).await;
+        let (agreement_id, _, _) = seed_contract_agreement(&consumer, &provider).await;
 
         let request = TransferRequest::builder()
             .counter_party_address(PROVIDER_PROTOCOL)
             .contract_id(&agreement_id)
             .transfer_type("HttpData-PULL")
-            .asset_id(&asset_id)
             .destination(DataAddress::builder().kind("HttpProxy").build().unwrap())
             .build()
             .unwrap();
@@ -54,19 +49,20 @@ mod initiate {
         let request = TransferRequest::builder()
             .counter_party_address(PROVIDER_PROTOCOL)
             .contract_id(&Uuid::new_v4().to_string())
-            .asset_id(&Uuid::new_v4().to_string())
             .transfer_type("HttpData-PULL")
             .destination(DataAddress::builder().kind("HttpProxy").build().unwrap())
             .build()
             .unwrap();
 
-        let response = consumer
-            .transfer_processes()
-            .initiate(&request)
-            .await
-            .unwrap();
+        let response = consumer.transfer_processes().initiate(&request).await;
 
-        wait_for_transfer_state(&consumer, response.id(), TransferProcessState::Terminated).await;
+        assert!(matches!(
+            response,
+            Err(Error::ManagementApi(ManagementApiError {
+                status_code: StatusCode::BAD_REQUEST,
+                error_detail: ManagementApiErrorDetailKind::Parsed(..)
+            }))
+        ))
     }
 }
 
@@ -80,21 +76,13 @@ mod get {
 
     use crate::common::seed_contract_agreement;
     use crate::common::{
-        seed_data_plane, setup_consumer_client, setup_provider_client, wait_for_transfer_state,
-        PROVIDER_PROTOCOL,
+        setup_consumer_client, setup_provider_client, wait_for_transfer_state, PROVIDER_PROTOCOL,
     };
 
     #[tokio::test]
     async fn should_get_a_transfer_process() {
         let provider = setup_provider_client();
         let consumer = setup_consumer_client();
-
-        seed_data_plane(
-            &provider,
-            "dataplane",
-            "http://provider-connector:9192/control/transfer",
-        )
-        .await;
 
         let (agreement_id, _, asset_id) = seed_contract_agreement(&consumer, &provider).await;
 
@@ -107,7 +95,6 @@ mod get {
         let request = TransferRequest::builder()
             .counter_party_address(PROVIDER_PROTOCOL)
             .contract_id(&agreement_id)
-            .asset_id(&asset_id)
             .transfer_type("HttpData-PULL")
             .callback_address(cb.clone())
             .destination(DataAddress::builder().kind("HttpProxy").build().unwrap())
@@ -156,7 +143,7 @@ mod query {
     };
 
     use crate::common::{
-        seed_contract_agreement, seed_data_plane, setup_consumer_client, setup_provider_client,
+        seed_contract_agreement, setup_consumer_client, setup_provider_client,
         wait_for_transfer_state, PROVIDER_PROTOCOL,
     };
 
@@ -165,19 +152,11 @@ mod query {
         let provider = setup_provider_client();
         let consumer = setup_consumer_client();
 
-        seed_data_plane(
-            &provider,
-            "dataplane",
-            "http://provider-connector:9192/control/transfer",
-        )
-        .await;
-
         let (agreement_id, _, asset_id) = seed_contract_agreement(&consumer, &provider).await;
 
         let request = TransferRequest::builder()
             .counter_party_address(PROVIDER_PROTOCOL)
             .contract_id(&agreement_id)
-            .asset_id(&asset_id)
             .transfer_type("HttpData-PULL")
             .destination(DataAddress::builder().kind("HttpProxy").build().unwrap())
             .build()
@@ -211,7 +190,7 @@ mod terminate {
     };
 
     use crate::common::{
-        seed_contract_agreement, seed_data_plane, setup_consumer_client, setup_provider_client,
+        seed_contract_agreement, setup_consumer_client, setup_provider_client,
         wait_for_transfer_state, PROVIDER_PROTOCOL,
     };
 
@@ -220,19 +199,11 @@ mod terminate {
         let provider = setup_provider_client();
         let consumer = setup_consumer_client();
 
-        seed_data_plane(
-            &provider,
-            "dataplane",
-            "http://provider-connector:9192/control/transfer",
-        )
-        .await;
-
-        let (agreement_id, _, asset_id) = seed_contract_agreement(&consumer, &provider).await;
+        let (agreement_id, _, _) = seed_contract_agreement(&consumer, &provider).await;
 
         let request = TransferRequest::builder()
             .counter_party_address(PROVIDER_PROTOCOL)
             .contract_id(&agreement_id)
-            .asset_id(&asset_id)
             .transfer_type("HttpData-PULL")
             .destination(DataAddress::builder().kind("HttpProxy").build().unwrap())
             .build()
@@ -266,7 +237,7 @@ mod suspend {
     };
 
     use crate::common::{
-        seed_contract_agreement, seed_data_plane, setup_consumer_client, setup_provider_client,
+        seed_contract_agreement, setup_consumer_client, setup_provider_client,
         wait_for_transfer_state, PROVIDER_PROTOCOL,
     };
 
@@ -275,19 +246,11 @@ mod suspend {
         let provider = setup_provider_client();
         let consumer = setup_consumer_client();
 
-        seed_data_plane(
-            &provider,
-            "dataplane",
-            "http://provider-connector:9192/control/transfer",
-        )
-        .await;
-
-        let (agreement_id, _, asset_id) = seed_contract_agreement(&consumer, &provider).await;
+        let (agreement_id, _, _) = seed_contract_agreement(&consumer, &provider).await;
 
         let request = TransferRequest::builder()
             .counter_party_address(PROVIDER_PROTOCOL)
             .contract_id(&agreement_id)
-            .asset_id(&asset_id)
             .transfer_type("HttpData-PULL")
             .destination(DataAddress::builder().kind("HttpProxy").build().unwrap())
             .build()

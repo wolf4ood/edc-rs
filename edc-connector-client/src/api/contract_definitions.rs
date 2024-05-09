@@ -20,7 +20,7 @@ impl<'a> ContractDefinitionApi<'a> {
         &self,
         contract_definition: &NewContractDefinition,
     ) -> EdcResult<IdResponse<String>> {
-        let url = format!("{}/v2/contractdefinitions", self.0.management_url);
+        let url = format!("{}/v3/contractdefinitions", self.0.management_url);
         self.0
             .post::<_, WithContext<IdResponse<String>>>(
                 url,
@@ -31,7 +31,7 @@ impl<'a> ContractDefinitionApi<'a> {
     }
 
     pub async fn get(&self, id: &str) -> EdcResult<ContractDefinition> {
-        let url = format!("{}/v2/contractdefinitions/{}", self.0.management_url, id);
+        let url = format!("{}/v3/contractdefinitions/{}", self.0.management_url, id);
         self.0
             .get::<WithContext<ContractDefinition>>(url)
             .await
@@ -39,14 +39,14 @@ impl<'a> ContractDefinitionApi<'a> {
     }
 
     pub async fn update(&self, contract_definition: &ContractDefinition) -> EdcResult<()> {
-        let url = format!("{}/v2/contractdefinitions", self.0.management_url);
+        let url = format!("{}/v3/contractdefinitions", self.0.management_url);
         self.0
             .put(url, &WithContextRef::default_context(contract_definition))
             .await
     }
 
     pub async fn query(&self, query: Query) -> EdcResult<Vec<ContractDefinition>> {
-        let url = format!("{}/v2/contractdefinitions/request", self.0.management_url);
+        let url = format!("{}/v3/contractdefinitions/request", self.0.management_url);
         self.0
             .post::<_, Vec<WithContext<ContractDefinition>>>(
                 url,
@@ -57,7 +57,7 @@ impl<'a> ContractDefinitionApi<'a> {
     }
 
     pub async fn delete(&self, id: &str) -> EdcResult<()> {
-        let url = format!("{}/v2/contractdefinitions/{}", self.0.management_url, id);
+        let url = format!("{}/v3/contractdefinitions/{}", self.0.management_url, id);
         self.0.del(url).await
     }
 }

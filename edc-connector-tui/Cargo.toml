@@ -1,0 +1,23 @@
+[package]
+name = "edc-connector-tui"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+crossterm = "0.27.0"
+ratatui = "0.26.0"
+tui-textarea = "0.4"
+anyhow = "1.0.83"
+dirs-next = "2.0.0"
+toml = "0.8.12"
+futures = "0.3.30"
+tokio = {workspace=true}
+serde = {workspace=true}
+serde_json = {workspace=true}
+async-trait = {workspace=true}
+edc-connector-client = { path = "../edc-connector-client", version = "0.1.0"}
+enum-ordinalize = "4.3.0"
+strum = "0.26.2"
+arboard = { version = "3.4.0", features = ["wayland-data-control"] }
