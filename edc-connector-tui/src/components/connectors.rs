@@ -1,0 +1,90 @@
+use ratatui::{layout::Rect, widgets::Row, Frame};
+
+use crate::types::{connector::Connector, nav::Nav};
+
+use self::msg::ConnectorsMsg;
+
+use super::{
+    table::{msg::TableMsg, TableEntry, UiTable},
+    Component, ComponentEvent, ComponentMsg, ComponentReturn, Action,
+};
+
+pub mod msg;
+
+pub type ConnectorsTable = UiTable<ConnectorEntry, Box<ConnectorsMsg>>;
+
+#[derive(Debug, Default)]
+pub struct Connectors {
+    table: ConnectorsTable,
+    selected: Option<Connector>,
+}
+
+#[derive(Debug)]
+pub struct ConnectorEntry(Connector);
+
+impl TableEntry for ConnectorEntry {
+    fn row(&self) -> Row {
+        Row::new(vec![self.0.config().name(), self.0.config().address()])
+    }
+
+    fn headers() -> Row<'static> {
+        Row::new(vec!["NAME", "ADDRESS", "STATUS"])
+    }
+}
+
+#[async_trait::async_trait]
+impl Component for Connectors {
+    type Msg = ConnectorsMsg;
+    type Props = ();
+
+    fn view(&mut self, f: &mut Frame, rect: Rect) {
+        self.table.view(f, rect);
+    }
+
+    async fn update(
+        &mut self,
+        msg: ComponentMsg<Self::Msg>,
+    ) -> anyhow::Result<ComponentReturn<Self::Msg>> {
+        match msg.to_owned() {
+            ConnectorsMsg::ConnectorSelected(connector) => {
+                self.selected = Some(connector.clone());
+                Ok(ComponentReturn::action(Action::NavTo(Nav::AssetsList)))
+            }
+            ConnectorsMsg::TableEvent(table) => {
+                Self::forward_update::<_, ConnectorsTable>(
+                    &mut self.table,
+                    table.into(),
+                    ConnectorsMsg::TableEvent,
+                )
+                .await
+            }
+        }
+    }
+
+    fn handle_event(
+        &mut self,
+        evt: ComponentEvent,
+    ) -> anyhow::Result<Vec<ComponentMsg<Self::Msg>>> {
+        Self::forward_event(&mut self.table, evt, |msg| match msg {
+            TableMsg::Local(table) => ConnectorsMsg::TableEvent(TableMsg::Local(table)),
+            TableMsg::Outer(outer) => *outer,
+        })
+    }
+}
+
+impl Connectors {
+    pub fn new(connectors: Vec<Connector>) -> Self {
+        Self {
+            table: ConnectorsTable::with_elements(
+                "Connectors".to_string(),
+                connectors.into_iter().map(ConnectorEntry).collect(),
+            )
+            .on_select(|connector| Box::new(ConnectorsMsg::ConnectorSelected(connector.0.clone()))),
+            selected: None,
+        }
+    }
+
+    pub fn selected(&self) -> Option<&Connector> {
+        self.selected.as_ref()
+    }
+}

@@ -9,7 +9,7 @@ use crate::error::ConversionError;
 
 pub use self::conversion::{FromValue, ToValue};
 
-#[derive(Debug, Serialize, Deserialize, Default)]
+#[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub struct Properties(HashMap<String, PropertyValue>);
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
@@ -28,6 +28,10 @@ impl Properties {
 
     pub fn get_raw(&self, property: &str) -> Option<&PropertyValue> {
         self.0.get(property)
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = (&String, &PropertyValue)> {
+        self.0.iter()
     }
 
     pub(crate) fn set<T>(&mut self, property: &str, value: T)

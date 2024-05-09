@@ -7,7 +7,7 @@ use crate::{BuilderError, ConversionError};
 
 use super::properties::{FromValue, Properties, PropertyValue, ToValue};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct PolicyDefinition {
     #[serde(rename = "@id")]

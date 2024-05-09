@@ -7,7 +7,7 @@ use super::{
     properties::{FromValue, Properties, PropertyValue, ToValue},
 };
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Asset {
     #[serde(rename = "@id")]
@@ -54,6 +54,18 @@ where {
 
     pub fn id(&self) -> &str {
         &self.id
+    }
+
+    pub fn properties(&self) -> &Properties {
+        &self.properties
+    }
+
+    pub fn private_properties(&self) -> &Properties {
+        &self.private_properties
+    }
+
+    pub fn data_address(&self) -> &DataAddress {
+        &self.data_address
     }
 }
 
