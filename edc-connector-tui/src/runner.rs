@@ -7,28 +7,26 @@ use crate::components::{Component, ComponentMsg, GlobalMsg};
 
 pub struct Runner<C: Component> {
     tick_rate: Duration,
-    component: C,
+    model: C::Model,
 }
 
 impl<C: Component + Send> Runner<C> {
-    pub fn new(tick_rate: Duration, component: C) -> Self {
-        Self {
-            tick_rate,
-            component,
-        }
+    pub fn new(tick_rate: Duration, model: C::Model) -> Self {
+        Self { tick_rate, model }
     }
 
     pub async fn run(&mut self, mut terminal: Terminal<impl Backend>) -> anyhow::Result<()> {
         terminal.clear()?;
 
         loop {
-            terminal.draw(|frame| self.component.view(frame, frame.size()))?;
+            terminal.draw(|frame| C::view(&mut self.model, frame, frame.size()))?;
+
             if event::poll(self.tick_rate)? {
                 let evt = event::read()?;
 
-                if let Some(msg) = self.component.handle_event(evt)? {
+                if let Some(msg) = C::handle_event(&self.model, evt)? {
                     let should_quit = matches!(msg, ComponentMsg::Global(GlobalMsg::Quit));
-                    self.component.update(msg).await?;
+                    C::update(&mut self.model, msg).await?;
                     if should_quit {
                         break;
                     }

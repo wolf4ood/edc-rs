@@ -15,9 +15,7 @@ pub mod model;
 pub mod msg;
 
 #[derive(Debug, Default)]
-pub struct Connectors {
-    model: model::ConnectorsModel,
-}
+pub struct Connectors;
 
 #[async_trait::async_trait]
 impl Component for Connectors {
@@ -25,15 +23,14 @@ impl Component for Connectors {
 
     type Model = ConnectorsModel;
 
-    fn view(&mut self, f: &mut Frame, area: Rect) {
+    fn view(model: &mut Self::Model, f: &mut Frame, area: Rect) {
         let styled_text = Span::styled(" Connectors ", Style::default().fg(Color::Red));
         let block = Block::default()
             .title(Title::from(styled_text).alignment(Alignment::Center))
             .border_type(BorderType::Rounded)
             .borders(Borders::ALL);
 
-        let rows: Vec<_> = self
-            .model
+        let rows: Vec<_> = model
             .connectors
             .iter()
             .map(|connector| Row::new(vec![connector.name(), connector.address()]))
@@ -49,38 +46,35 @@ impl Component for Connectors {
             .block(block)
             .highlight_style(Style::new().add_modifier(Modifier::REVERSED));
 
-        f.render_stateful_widget(table, area, &mut self.model.table_state);
+        f.render_stateful_widget(table, area, &mut model.table_state);
     }
 
-    async fn update(&mut self, msg: ComponentMsg<Self::Msg>) -> anyhow::Result<()> {
+    async fn update(
+        model: &mut Self::Model,
+        msg: ComponentMsg<Self::Msg>,
+    ) -> anyhow::Result<Option<ComponentMsg<Self::Msg>>> {
         match msg {
-            ComponentMsg::Local(ConnectorsMsg::MoveUp) => self.move_up(),
-            ComponentMsg::Local(ConnectorsMsg::MoveDown) => self.move_down(),
+            ComponentMsg::Local(ConnectorsMsg::MoveUp) => Self::move_up(model),
+            ComponentMsg::Local(ConnectorsMsg::MoveDown) => Self::move_down(model),
             _ => {}
         };
 
-        Ok(())
+        Ok(None)
     }
 
     fn handle_event(
-        &self,
+        _model: &Self::Model,
         evt: crossterm::event::Event,
     ) -> anyhow::Result<Option<super::ComponentMsg<Self::Msg>>> {
         match evt {
-            crossterm::event::Event::Key(key) => Ok(self.handle_key(key)),
+            crossterm::event::Event::Key(key) => Ok(Self::handle_key(key)),
             _ => Ok(None),
-        }
-    }
-
-    fn init(config: crate::config::Config) -> Self {
-        Connectors {
-            model: ConnectorsModel::new(config.connectors),
         }
     }
 }
 
 impl Connectors {
-    fn handle_key(&self, key: KeyEvent) -> Option<ComponentMsg<ConnectorsMsg>> {
+    fn handle_key(key: KeyEvent) -> Option<ComponentMsg<ConnectorsMsg>> {
         match key.code {
             KeyCode::Char('j') => Some(ComponentMsg::Local(ConnectorsMsg::MoveDown)),
             KeyCode::Char('k') => Some(ComponentMsg::Local(ConnectorsMsg::MoveUp)),
@@ -88,21 +82,21 @@ impl Connectors {
         }
     }
 
-    fn move_up(&mut self) {
-        let new_pos = match self.model.table_state.selected() {
-            Some(i) if i == 0 => self.model.connectors.len() - 1,
+    fn move_up(model: &mut ConnectorsModel) {
+        let new_pos = match model.table_state.selected() {
+            Some(i) if i == 0 => model.connectors.len() - 1,
             Some(i) => i - 1,
             None => 0,
         };
-        self.model.table_state.select(Some(new_pos))
+        model.table_state.select(Some(new_pos))
     }
 
-    fn move_down(&mut self) {
-        let new_pos = match self.model.table_state.selected() {
-            Some(i) if i == self.model.connectors.len() - 1 => 0,
+    fn move_down(model: &mut ConnectorsModel) {
+        let new_pos = match model.table_state.selected() {
+            Some(i) if i == model.connectors.len() - 1 => 0,
             Some(i) => i + 1,
             None => 0,
         };
-        self.model.table_state.select(Some(new_pos))
+        model.table_state.select(Some(new_pos))
     }
 }

@@ -1,34 +1,51 @@
 use crossterm::event::Event;
 use ratatui::{layout::Rect, Frame};
 
-use crate::config::Config;
-
 pub mod connectors;
 pub mod footer;
 
 #[async_trait::async_trait]
 pub trait Component {
-    type Msg;
-    type Model;
+    type Msg: Send;
+    type Model: Send;
 
-    fn init(config: Config) -> Self;
-    fn view(&mut self, f: &mut Frame, rect: Rect);
+    fn view(model: &mut Self::Model, f: &mut Frame, rect: Rect);
 
-    async fn update(&mut self, message: ComponentMsg<Self::Msg>) -> anyhow::Result<()>;
+    async fn update(
+        model: &mut Self::Model,
+        message: ComponentMsg<Self::Msg>,
+    ) -> anyhow::Result<Option<ComponentMsg<Self::Msg>>>;
 
-    fn handle_event(&self, evt: Event) -> anyhow::Result<Option<ComponentMsg<Self::Msg>>>;
+    fn handle_event(
+        model: &Self::Model,
+        evt: Event,
+    ) -> anyhow::Result<Option<ComponentMsg<Self::Msg>>>;
+
+    async fn forward_update<F, C>(
+        model: &mut C::Model,
+        msg: ComponentMsg<C::Msg>,
+        mapper: F,
+    ) -> anyhow::Result<Option<ComponentMsg<Self::Msg>>>
+    where
+        F: FnOnce(C::Msg) -> Self::Msg + Send,
+        C: Component + Sync + Send,
+    {
+        match C::update(model, msg).await? {
+            Some(c) => Ok(Some(c.map(mapper))),
+            None => Ok(None),
+        }
+    }
 
     fn forward_event<F, C>(
-        &self,
+        model: &C::Model,
         evt: Event,
-        component: &C,
         mapper: F,
     ) -> anyhow::Result<Option<ComponentMsg<Self::Msg>>>
     where
         F: FnOnce(C::Msg) -> Self::Msg,
         C: Component,
     {
-        match component.handle_event(evt)? {
+        match C::handle_event(model, evt)? {
             Some(c) => Ok(Some(c.map(mapper))),
             None => Ok(None),
         }
@@ -38,11 +55,18 @@ pub trait Component {
 #[derive(Debug)]
 pub enum ComponentMsg<T> {
     Global(GlobalMsg),
+    Shared(SharedMsg),
     Local(T),
 }
 
 #[derive(Debug, Clone)]
 pub enum GlobalMsg {
+    Quit,
+    Esc,
+}
+
+#[derive(Debug, Clone)]
+pub enum SharedMsg {
     Quit,
     Esc,
 }
@@ -55,6 +79,7 @@ impl<T> ComponentMsg<T> {
         match self {
             ComponentMsg::Global(g) => ComponentMsg::Global(g),
             ComponentMsg::Local(msg) => ComponentMsg::Local(mapper(msg)),
+            ComponentMsg::Shared(s) => ComponentMsg::Shared(s),
         }
     }
 }

@@ -1,5 +1,5 @@
 use std::rc::Rc;
-mod model;
+pub mod model;
 mod msg;
 use crossterm::event::{self, Event, KeyCode};
 use ratatui::{
@@ -20,7 +20,7 @@ use self::{
     msg::AppMsg,
 };
 
-pub struct App(AppModel);
+pub struct App;
 
 #[async_trait::async_trait]
 impl Component for App {
@@ -28,40 +28,63 @@ impl Component for App {
 
     type Model = AppModel;
 
-    fn view(&mut self, f: &mut Frame, rect: ratatui::prelude::Rect) {
-        let main = self.main_layout(rect);
-        f.render_widget(self.header(), main[0]);
-        self.0.connectors.view(f, main[1]);
-        self.0.footer.view(f, main[2])
+    fn view(model: &mut Self::Model, f: &mut Frame, rect: ratatui::prelude::Rect) {
+        let main = Self::main_layout(model, rect);
+        f.render_widget(Self::header(), main[0]);
+        Connectors::view(&mut model.connectors, f, main[1]);
+        Footer::view(&mut model.footer, f, main[2]);
     }
 
-    async fn update(&mut self, msg: ComponentMsg<Self::Msg>) -> anyhow::Result<()> {
+    async fn update(
+        model: &mut Self::Model,
+        msg: ComponentMsg<Self::Msg>,
+    ) -> anyhow::Result<Option<ComponentMsg<AppMsg>>> {
         match msg {
-            ComponentMsg::Local(AppMsg::ConnectorsMsg(m)) => self.0.connectors.update(m.into()).await,
-            ComponentMsg::Local(AppMsg::ShowFooter) => {
-                self.0.footer_visible = true;
-                self.0.focus = AppFocus::Footer;
-                Ok(())
+            ComponentMsg::Local(AppMsg::ConnectorsMsg(m)) => {
+                Self::forward_update::<_, Connectors>(
+                    &mut model.connectors,
+                    m.into(),
+                    AppMsg::ConnectorsMsg,
+                )
+                .await
             }
-            ComponentMsg::Local(AppMsg::FooterMsg(m)) => self.0.footer.update(m.into()).await,
-            _ => Ok(())
+            ComponentMsg::Local(AppMsg::ShowFooter) => {
+                model.footer_visible = true;
+                model.focus = AppFocus::Footer;
+                Ok(None)
+            }
+            ComponentMsg::Local(AppMsg::FooterMsg(m)) => {
+                Self::forward_update::<_, Footer>(&mut model.footer, m.into(), AppMsg::FooterMsg)
+                    .await
+            }
+            ComponentMsg::Global(GlobalMsg::Esc) => {
+                model.footer_visible = false;
+                model.focus = AppFocus::ConnectorList;
+                Ok(None)
+            }
+            _ => Ok(None),
         }
     }
 
-    fn handle_event(&self, evt: Event) -> anyhow::Result<Option<ComponentMsg<Self::Msg>>> {
-        let msg = match self.0.focus {
-            model::AppFocus::ConnectorList => {
-                self.forward_event(evt.clone(), &self.0.connectors, AppMsg::ConnectorsMsg)?
-            }
+    fn handle_event(
+        model: &Self::Model,
+        evt: Event,
+    ) -> anyhow::Result<Option<ComponentMsg<Self::Msg>>> {
+        let msg = match model.focus {
+            model::AppFocus::ConnectorList => Self::forward_event::<_, Connectors>(
+                &model.connectors,
+                evt.clone(),
+                AppMsg::ConnectorsMsg,
+            )?,
             model::AppFocus::Footer => {
-                self.forward_event(evt.clone(), &self.0.footer, AppMsg::FooterMsg)?
+                Self::forward_event::<_, Footer>(&model.footer, evt.clone(), AppMsg::FooterMsg)?
             }
         };
 
         if msg.is_none() {
             if let Event::Key(key) = evt {
                 if key.kind == event::KeyEventKind::Press {
-                    return Ok(self.handle_key(key));
+                    return Ok(Self::handle_key(key));
                 }
             }
         } else {
@@ -70,17 +93,10 @@ impl Component for App {
 
         Ok(None)
     }
-
-    fn init(config: crate::config::Config) -> Self {
-        let connectors = Connectors::init(config.clone());
-        let footer = Footer::init(config.clone());
-
-        App(AppModel::new(connectors, footer))
-    }
 }
 
 impl App {
-    fn header(&self) -> Paragraph {
+    fn header() -> Paragraph<'static> {
         let top_text = Text::from(BANNER).patch_style(Style::default().fg(HIGHLIGHT_COLOR));
         Paragraph::new(top_text)
             .style(Style::default().fg(Color::White))
@@ -88,8 +104,8 @@ impl App {
             .block(Block::default())
     }
 
-    fn main_layout(&self, rect: Rect) -> Rc<[Rect]> {
-        let body_percentage = if self.0.footer_visible { 80 } else { 85 };
+    fn main_layout(model: &AppModel, rect: Rect) -> Rc<[Rect]> {
+        let body_percentage = if model.footer_visible { 80 } else { 85 };
         let footer_percentage = 100 - body_percentage - 15;
         Layout::default()
             .direction(Direction::Vertical)
@@ -104,7 +120,7 @@ impl App {
             .split(rect)
     }
 
-    fn handle_key(&self, key: event::KeyEvent) -> Option<ComponentMsg<AppMsg>> {
+    fn handle_key(key: event::KeyEvent) -> Option<ComponentMsg<AppMsg>> {
         match key.code {
             KeyCode::Char('q') => Some(ComponentMsg::Global(GlobalMsg::Quit)),
             KeyCode::Char(':') => Some(ComponentMsg::Local(AppMsg::ShowFooter)),

@@ -11,7 +11,7 @@ pub mod model;
 pub mod msg;
 
 #[derive(Default, Debug)]
-pub struct Footer(FooterModel);
+pub struct Footer;
 
 #[async_trait::async_trait]
 impl Component for Footer {
@@ -19,26 +19,29 @@ impl Component for Footer {
 
     type Model = FooterModel;
 
-    fn view(&mut self, f: &mut Frame, area: Rect) {
-        let text_area = &mut self.0.area;
+    fn view(model: &mut Self::Model, f: &mut Frame, area: Rect) {
+        let text_area = &mut model.area;
         text_area.set_block(Block::default().borders(Borders::all()));
         text_area.set_cursor_line_style(Style::default());
         text_area.set_placeholder_text("Enter command");
-        f.render_widget(self.0.area.widget(), area)
+        f.render_widget(model.area.widget(), area)
     }
 
-    async fn update(&mut self, msg: ComponentMsg<Self::Msg>) -> anyhow::Result<()> {
+    async fn update(
+        model: &mut Self::Model,
+        msg: ComponentMsg<Self::Msg>,
+    ) -> anyhow::Result<Option<ComponentMsg<Self::Msg>>> {
         match msg {
             ComponentMsg::Local(FooterMsg::AppendCommand(input)) => {
-                self.0.area.input(input);
+                model.area.input(input);
             }
             _ => {}
         };
-        Ok(())
+        Ok(None)
     }
 
     fn handle_event(
-        &self,
+        _model: &Self::Model,
         evt: crossterm::event::Event,
     ) -> anyhow::Result<Option<ComponentMsg<Self::Msg>>> {
         let input: Input = evt.into();
@@ -48,9 +51,5 @@ impl Component for Footer {
         } else {
             Ok(Some(ComponentMsg::Local(FooterMsg::AppendCommand(input))))
         }
-    }
-
-    fn init(_config: crate::config::Config) -> Self {
-        Footer::default()
     }
 }

@@ -1,15 +1,24 @@
-use crate::components::{connectors::Connectors, footer::Footer};
+use crate::{
+    components::{connectors::model::ConnectorsModel, footer::model::FooterModel},
+    config::Config,
+};
 
 #[derive(Debug, Default)]
 pub struct AppModel {
-    pub(crate) connectors: Connectors,
-    pub(crate) footer: Footer,
+    pub(crate) connectors: ConnectorsModel,
+    pub(crate) footer: FooterModel,
     pub(crate) focus: AppFocus,
     pub(crate) footer_visible: bool,
 }
 
 impl AppModel {
-    pub fn new(connectors: Connectors, footer: Footer) -> Self {
+    pub fn init(cfg: Config) -> AppModel {
+        let connectors = ConnectorsModel::new(cfg.connectors.clone());
+        let footer = FooterModel::default();
+
+        AppModel::new(connectors, footer)
+    }
+    pub fn new(connectors: ConnectorsModel, footer: FooterModel) -> Self {
         Self {
             connectors,
             footer,
