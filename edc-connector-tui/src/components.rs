@@ -1,6 +1,8 @@
 use crossterm::event::Event;
 use ratatui::{layout::Rect, Frame};
 
+use crate::types::connector::Connector;
+
 pub mod connectors;
 pub mod footer;
 
@@ -67,8 +69,7 @@ pub enum GlobalMsg {
 
 #[derive(Debug, Clone)]
 pub enum SharedMsg {
-    Quit,
-    Esc,
+    ChangeConnector(Connector),
 }
 
 impl<T> ComponentMsg<T> {

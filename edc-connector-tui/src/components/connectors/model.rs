@@ -1,6 +1,6 @@
 use ratatui::widgets::TableState;
 
-use crate::config::Connector;
+use crate::types::connector::Connector;
 
 #[derive(Debug, Default)]
 pub struct ConnectorsModel {

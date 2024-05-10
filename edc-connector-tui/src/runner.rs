@@ -24,9 +24,17 @@ impl<C: Component + Send> Runner<C> {
             if event::poll(self.tick_rate)? {
                 let evt = event::read()?;
 
-                if let Some(msg) = C::handle_event(&self.model, evt)? {
+                if let Some(mut msg) = C::handle_event(&self.model, evt)? {
                     let should_quit = matches!(msg, ComponentMsg::Global(GlobalMsg::Quit));
-                    C::update(&mut self.model, msg).await?;
+                    loop {
+                        let new_msg = C::update(&mut self.model, msg).await?;
+
+                        if let Some(m) = new_msg {
+                            msg = m;
+                        } else {
+                            break;
+                        }
+                    }
                     if should_quit {
                         break;
                     }

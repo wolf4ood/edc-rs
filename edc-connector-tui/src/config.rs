@@ -21,7 +21,7 @@ pub fn get_app_config_path() -> anyhow::Result<std::path::PathBuf> {
 
 #[derive(Deserialize, Clone)]
 pub struct Config {
-    pub connectors: Vec<Connector>,
+    pub connectors: Vec<ConnectorConfig>,
 }
 
 impl Config {
@@ -44,12 +44,12 @@ pub fn default_file() -> anyhow::Result<PathBuf> {
 }
 
 #[derive(Deserialize, Debug, Clone)]
-pub struct Connector {
+pub struct ConnectorConfig {
     name: String,
     address: String,
 }
 
-impl Connector {
+impl ConnectorConfig {
     pub fn name(&self) -> &str {
         &self.name
     }

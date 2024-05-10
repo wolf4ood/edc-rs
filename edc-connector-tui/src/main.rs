@@ -3,6 +3,7 @@ mod components;
 mod config;
 mod constants;
 mod runner;
+mod types;
 
 use std::time::Duration;
 

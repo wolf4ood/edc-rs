@@ -11,7 +11,9 @@ use ratatui::{
 };
 
 use crate::{
-    components::{connectors::Connectors, footer::Footer, Component, ComponentMsg, GlobalMsg},
+    components::{
+        connectors::Connectors, footer::Footer, Component, ComponentMsg, GlobalMsg, SharedMsg,
+    },
     constants::{BANNER, HIGHLIGHT_COLOR},
 };
 
@@ -25,10 +27,9 @@ pub struct App;
 #[async_trait::async_trait]
 impl Component for App {
     type Msg = AppMsg;
-
     type Model = AppModel;
 
-    fn view(model: &mut Self::Model, f: &mut Frame, rect: ratatui::prelude::Rect) {
+    fn view(model: &mut Self::Model, f: &mut Frame, rect: Rect) {
         let main = Self::main_layout(model, rect);
         f.render_widget(Self::header(), main[0]);
         Connectors::view(&mut model.connectors, f, main[1]);
@@ -60,6 +61,10 @@ impl Component for App {
             ComponentMsg::Global(GlobalMsg::Esc) => {
                 model.footer_visible = false;
                 model.focus = AppFocus::ConnectorList;
+                Ok(None)
+            }
+            ComponentMsg::Shared(SharedMsg::ChangeConnector(connector)) => {
+                println!("New connector {}", connector.config().name());
                 Ok(None)
             }
             _ => Ok(None),

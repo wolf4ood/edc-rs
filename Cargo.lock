@@ -305,6 +305,7 @@ dependencies = [
  "async-trait",
  "crossterm",
  "dirs-next",
+ "edc-connector-client",
  "ratatui",
  "serde",
  "tokio",

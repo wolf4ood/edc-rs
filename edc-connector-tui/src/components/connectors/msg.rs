@@ -2,4 +2,5 @@
 pub enum ConnectorsMsg {
     MoveUp,
     MoveDown,
+    SelectCurrent,
 }

@@ -33,7 +33,12 @@ impl Component for Connectors {
         let rows: Vec<_> = model
             .connectors
             .iter()
-            .map(|connector| Row::new(vec![connector.name(), connector.address()]))
+            .map(|connector| {
+                Row::new(vec![
+                    connector.config().name(),
+                    connector.config().address(),
+                ])
+            })
             .collect();
 
         let widths = [
@@ -56,6 +61,15 @@ impl Component for Connectors {
         match msg {
             ComponentMsg::Local(ConnectorsMsg::MoveUp) => Self::move_up(model),
             ComponentMsg::Local(ConnectorsMsg::MoveDown) => Self::move_down(model),
+            ComponentMsg::Local(ConnectorsMsg::SelectCurrent) => {
+                if let Some(idx) = model.table_state.selected() {
+                    if let Some(connector) = model.connectors.get(idx) {
+                        return Ok(Some(ComponentMsg::Shared(
+                            super::SharedMsg::ChangeConnector(connector.clone()),
+                        )));
+                    }
+                }
+            }
             _ => {}
         };
 
@@ -78,6 +92,7 @@ impl Connectors {
         match key.code {
             KeyCode::Char('j') => Some(ComponentMsg::Local(ConnectorsMsg::MoveDown)),
             KeyCode::Char('k') => Some(ComponentMsg::Local(ConnectorsMsg::MoveUp)),
+            KeyCode::Enter => Some(ComponentMsg::Local(ConnectorsMsg::SelectCurrent)),
             _ => None,
         }
     }
