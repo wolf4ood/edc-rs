@@ -1,18 +1,27 @@
+use crate::components::{connectors::Connectors, footer::Footer};
+
 #[derive(Debug, Default)]
-pub struct Model {
-    pub(crate) counter: i32,
-    pub(crate) running_state: RunningState,
+pub struct AppModel {
+    pub(crate) connectors: Connectors,
+    pub(crate) footer: Footer,
+    pub(crate) focus: AppFocus,
+    pub(crate) footer_visible: bool,
 }
 
-impl Model {
-    pub fn running_state(&self) -> &RunningState {
-        &self.running_state
+impl AppModel {
+    pub fn new(connectors: Connectors, footer: Footer) -> Self {
+        Self {
+            connectors,
+            footer,
+            focus: AppFocus::ConnectorList,
+            footer_visible: false,
+        }
     }
 }
 
-#[derive(Debug, Default, PartialEq, Eq)]
-pub enum RunningState {
+#[derive(Debug, Default)]
+pub enum AppFocus {
     #[default]
-    Running,
-    Done,
+    ConnectorList,
+    Footer,
 }

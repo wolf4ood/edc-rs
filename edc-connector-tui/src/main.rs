@@ -1,17 +1,22 @@
-use std::io;
 mod app;
+mod components;
 mod config;
 mod constants;
+mod runner;
+
+use std::time::Duration;
 
 use app::App;
+use components::Component;
 use config::{default_file, Config};
-
+use runner::Runner;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let config = Config::parse(&default_file()?)?;
     tui::install_panic_hook();
     let terminal = tui::init_terminal()?;
-    App::new().run(terminal).await?;
+    let mut runner = Runner::new(Duration::from_millis(250), App::init(config));
+    runner.run(terminal).await?;
     tui::restore_terminal()?;
     Ok(())
 }

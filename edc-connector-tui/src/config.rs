@@ -19,9 +19,9 @@ pub fn get_app_config_path() -> anyhow::Result<std::path::PathBuf> {
     Ok(path)
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct Config {
-    connectors: Vec<Connector>,
+    pub connectors: Vec<Connector>,
 }
 
 impl Config {
@@ -43,8 +43,18 @@ pub fn default_file() -> anyhow::Result<PathBuf> {
     Ok(get_app_config_path()?.join("config.toml"))
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct Connector {
     name: String,
     address: String,
+}
+
+impl Connector {
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn address(&self) -> &str {
+        &self.address
+    }
 }
