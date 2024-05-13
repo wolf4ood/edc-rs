@@ -36,8 +36,8 @@ impl<C: Component + Send> Runner<C> {
 
                     let ret = C::update(&mut self.model, msg).await?;
 
-                    if let Some(new_msg) = ret.msg {
-                        msgs.push_back(new_msg);
+                    for m in ret.msgs {
+                        msgs.push_back(m);
                     }
                 }
             };

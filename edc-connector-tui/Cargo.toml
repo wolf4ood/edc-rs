@@ -12,6 +12,7 @@ tui-textarea = "0.4"
 anyhow = "1.0.83"
 dirs-next = "2.0.0"
 toml = "0.8.12"
+futures = "0.3.30"
 tokio = {workspace=true}
 serde = {workspace=true}
 async-trait = {workspace=true}

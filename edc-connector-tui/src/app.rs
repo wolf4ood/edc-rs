@@ -96,7 +96,6 @@ impl Component for App {
                 };
 
                 Self::broadcast(model, shared).await
-
             }
             _ => Ok(ComponentReturn::empty()),
         }
@@ -163,21 +162,24 @@ impl App {
         model: &mut AppModel,
         shared: SharedMsg,
     ) -> anyhow::Result<ComponentReturn<AppMsg>> {
-        let events = Self::forward_update::<_, Footer>(
-            &mut model.footer,
-            ComponentMsg::Shared(shared.clone()),
-            AppMsg::FooterMsg,
-        )
-        .await?;
+        let returns = vec![
+            Self::forward_update::<_, Footer>(
+                &mut model.footer,
+                ComponentMsg::Shared(shared.clone()),
+                AppMsg::FooterMsg,
+            )
+            .await?,
+            Self::forward_update::<_, Assets>(
+                &mut model.assets,
+                ComponentMsg::Shared(shared),
+                AppMsg::AssetsMsg,
+            )
+            .await?,
+        ];
 
-        let events = Self::forward_update::<_, Assets>(
-            &mut model.assets,
-            ComponentMsg::Shared(shared),
-            AppMsg::AssetsMsg,
-        )
-        .await?;
-
-        Ok(ComponentReturn::empty())
+        Ok(returns
+            .into_iter()
+            .fold(ComponentReturn::empty(), ComponentReturn::merge))
     }
 
     fn handle_key(key: event::KeyEvent) -> Vec<ComponentMsg<AppMsg>> {
