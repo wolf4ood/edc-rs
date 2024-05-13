@@ -74,6 +74,18 @@ impl Component for App {
                 model.focus = AppFocus::ConnectorList;
                 Ok(ComponentReturn::empty())
             }
+            ComponentMsg::Global(GlobalMsg::NavTo(Nav::ConnectorsList)) => {
+                model.footer_visible = false;
+                model.focus = AppFocus::ConnectorList;
+                model.nav = Nav::ConnectorsList;
+                Ok(ComponentReturn::empty())
+            }
+            ComponentMsg::Global(GlobalMsg::NavTo(Nav::AssetsList)) => {
+                model.footer_visible = false;
+                model.focus = AppFocus::Assets;
+                model.nav = Nav::AssetsList;
+                Ok(ComponentReturn::empty())
+            }
             ComponentMsg::Shared(shared) => {
                 match (&model.focus, &shared) {
                     (AppFocus::ConnectorList | AppFocus::Footer, _) => {
