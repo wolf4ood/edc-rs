@@ -12,9 +12,11 @@ use ratatui::{
 
 use crate::{
     components::{
-        connectors::Connectors, footer::Footer, Component, ComponentMsg, GlobalMsg, SharedMsg,
+        assets::Assets, connectors::Connectors, footer::Footer, Component, ComponentEvent,
+        ComponentMsg, ComponentReturn, GlobalMsg, SharedMsg,
     },
     constants::{BANNER, HIGHLIGHT_COLOR},
+    nav::Nav,
 };
 
 use self::{
@@ -32,14 +34,19 @@ impl Component for App {
     fn view(model: &mut Self::Model, f: &mut Frame, rect: Rect) {
         let main = Self::main_layout(model, rect);
         f.render_widget(Self::header(), main[0]);
-        Connectors::view(&mut model.connectors, f, main[1]);
+
+        match &model.nav {
+            crate::nav::Nav::ConnectorsList => Connectors::view(&mut model.connectors, f, main[1]),
+            crate::nav::Nav::AssetsList => Assets::view(&mut model.assets, f, main[1]),
+        }
+
         Footer::view(&mut model.footer, f, main[2]);
     }
 
     async fn update(
         model: &mut Self::Model,
         msg: ComponentMsg<Self::Msg>,
-    ) -> anyhow::Result<Option<ComponentMsg<AppMsg>>> {
+    ) -> anyhow::Result<ComponentReturn<AppMsg>> {
         match msg {
             ComponentMsg::Local(AppMsg::ConnectorsMsg(m)) => {
                 Self::forward_update::<_, Connectors>(
@@ -52,42 +59,57 @@ impl Component for App {
             ComponentMsg::Local(AppMsg::ShowFooter) => {
                 model.footer_visible = true;
                 model.focus = AppFocus::Footer;
-                Ok(None)
+                Ok(ComponentReturn::empty())
             }
             ComponentMsg::Local(AppMsg::FooterMsg(m)) => {
                 Self::forward_update::<_, Footer>(&mut model.footer, m.into(), AppMsg::FooterMsg)
                     .await
             }
+            ComponentMsg::Local(AppMsg::AssetsMsg(m)) => {
+                Self::forward_update::<_, Assets>(&mut model.assets, m.into(), AppMsg::AssetsMsg)
+                    .await
+            }
             ComponentMsg::Global(GlobalMsg::Esc) => {
                 model.footer_visible = false;
                 model.focus = AppFocus::ConnectorList;
-                Ok(None)
+                Ok(ComponentReturn::empty())
             }
-            ComponentMsg::Shared(SharedMsg::ChangeConnector(connector)) => {
-                println!("New connector {}", connector.config().name());
-                Ok(None)
+            ComponentMsg::Shared(shared) => {
+                match (&model.focus, &shared) {
+                    (AppFocus::ConnectorList | AppFocus::Footer, _) => {
+                        model.focus = AppFocus::Assets;
+                        model.nav = Nav::AssetsList;
+                    }
+                    (AppFocus::Assets, _) => {}
+                };
+
+                Self::broadcast(model, shared).await
+
             }
-            _ => Ok(None),
+            _ => Ok(ComponentReturn::empty()),
         }
     }
 
     fn handle_event(
         model: &Self::Model,
-        evt: Event,
-    ) -> anyhow::Result<Option<ComponentMsg<Self::Msg>>> {
+        evt: ComponentEvent,
+    ) -> anyhow::Result<Vec<ComponentMsg<Self::Msg>>> {
         let msg = match model.focus {
-            model::AppFocus::ConnectorList => Self::forward_event::<_, Connectors>(
+            AppFocus::ConnectorList => Self::forward_event::<_, Connectors>(
                 &model.connectors,
                 evt.clone(),
                 AppMsg::ConnectorsMsg,
             )?,
-            model::AppFocus::Footer => {
+            AppFocus::Footer => {
                 Self::forward_event::<_, Footer>(&model.footer, evt.clone(), AppMsg::FooterMsg)?
+            }
+            AppFocus::Assets => {
+                Self::forward_event::<_, Assets>(&model.assets, evt.clone(), AppMsg::AssetsMsg)?
             }
         };
 
-        if msg.is_none() {
-            if let Event::Key(key) = evt {
+        if msg.is_empty() {
+            if let ComponentEvent::Event(Event::Key(key)) = evt {
                 if key.kind == event::KeyEventKind::Press {
                     return Ok(Self::handle_key(key));
                 }
@@ -96,7 +118,7 @@ impl Component for App {
             return Ok(msg);
         }
 
-        Ok(None)
+        Ok(vec![])
     }
 }
 
@@ -125,11 +147,31 @@ impl App {
             .split(rect)
     }
 
-    fn handle_key(key: event::KeyEvent) -> Option<ComponentMsg<AppMsg>> {
+    async fn broadcast(
+        model: &mut AppModel,
+        shared: SharedMsg,
+    ) -> anyhow::Result<ComponentReturn<AppMsg>> {
+        let events = Self::forward_update::<_, Footer>(
+            &mut model.footer,
+            ComponentMsg::Shared(shared.clone()),
+            AppMsg::FooterMsg,
+        )
+        .await?;
+
+        let events = Self::forward_update::<_, Assets>(
+            &mut model.assets,
+            ComponentMsg::Shared(shared),
+            AppMsg::AssetsMsg,
+        )
+        .await?;
+
+        Ok(ComponentReturn::empty())
+    }
+
+    fn handle_key(key: event::KeyEvent) -> Vec<ComponentMsg<AppMsg>> {
         match key.code {
-            KeyCode::Char('q') => Some(ComponentMsg::Global(GlobalMsg::Quit)),
-            KeyCode::Char(':') => Some(ComponentMsg::Local(AppMsg::ShowFooter)),
-            _ => None,
+            KeyCode::Char(':') => vec![(ComponentMsg::Local(AppMsg::ShowFooter))],
+            _ => vec![],
         }
     }
 }

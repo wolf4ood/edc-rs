@@ -1,10 +1,11 @@
 use crossterm::event::Event;
 use ratatui::{layout::Rect, Frame};
 
-use crate::types::connector::Connector;
+use crate::{nav::Nav, types::connector::Connector};
 
 pub mod connectors;
 pub mod footer;
+pub mod assets;
 
 #[async_trait::async_trait]
 pub trait Component {
@@ -16,41 +17,38 @@ pub trait Component {
     async fn update(
         model: &mut Self::Model,
         message: ComponentMsg<Self::Msg>,
-    ) -> anyhow::Result<Option<ComponentMsg<Self::Msg>>>;
+    ) -> anyhow::Result<ComponentReturn<Self::Msg>>;
 
     fn handle_event(
         model: &Self::Model,
-        evt: Event,
-    ) -> anyhow::Result<Option<ComponentMsg<Self::Msg>>>;
+        evt: ComponentEvent,
+    ) -> anyhow::Result<Vec<ComponentMsg<Self::Msg>>>;
 
     async fn forward_update<F, C>(
         model: &mut C::Model,
         msg: ComponentMsg<C::Msg>,
         mapper: F,
-    ) -> anyhow::Result<Option<ComponentMsg<Self::Msg>>>
+    ) -> anyhow::Result<ComponentReturn<Self::Msg>>
     where
-        F: FnOnce(C::Msg) -> Self::Msg + Send,
+        F: Fn(C::Msg) -> Self::Msg + Send,
         C: Component + Sync + Send,
     {
-        match C::update(model, msg).await? {
-            Some(c) => Ok(Some(c.map(mapper))),
-            None => Ok(None),
-        }
+        Ok(C::update(model, msg).await?.map(mapper))
     }
 
     fn forward_event<F, C>(
         model: &C::Model,
-        evt: Event,
+        evt: ComponentEvent,
         mapper: F,
-    ) -> anyhow::Result<Option<ComponentMsg<Self::Msg>>>
+    ) -> anyhow::Result<Vec<ComponentMsg<Self::Msg>>>
     where
-        F: FnOnce(C::Msg) -> Self::Msg,
+        F: Fn(C::Msg) -> Self::Msg,
         C: Component,
     {
-        match C::handle_event(model, evt)? {
-            Some(c) => Ok(Some(c.map(mapper))),
-            None => Ok(None),
-        }
+        Ok(C::handle_event(model, evt)?
+            .into_iter()
+            .map(|c| c.map(&mapper))
+            .collect())
     }
 }
 
@@ -61,10 +59,17 @@ pub enum ComponentMsg<T> {
     Local(T),
 }
 
+#[derive(Debug, Default)]
+pub struct ComponentReturn<T> {
+    pub(crate) msg: Option<ComponentMsg<T>>,
+    cmd: Option<()>,
+}
+
 #[derive(Debug, Clone)]
 pub enum GlobalMsg {
     Quit,
     Esc,
+    NavTo(Nav),
 }
 
 #[derive(Debug, Clone)]
@@ -85,8 +90,48 @@ impl<T> ComponentMsg<T> {
     }
 }
 
+impl<T> ComponentReturn<T> {
+    pub fn empty() -> ComponentReturn<T> {
+        ComponentReturn {
+            msg: None,
+            cmd: None,
+        }
+    }
+
+    pub fn map<M, F>(self, mapper: F) -> ComponentReturn<M>
+    where
+        F: FnOnce(T) -> M,
+    {
+        let msg = match self.msg {
+            Some(ComponentMsg::Global(g)) => Some(ComponentMsg::Global(g)),
+            Some(ComponentMsg::Local(msg)) => Some(ComponentMsg::Local(mapper(msg))),
+            Some(ComponentMsg::Shared(s)) => Some(ComponentMsg::Shared(s)),
+            _ => None,
+        };
+
+        ComponentReturn { msg, cmd: self.cmd }
+    }
+}
+
 impl<T> From<T> for ComponentMsg<T> {
     fn from(value: T) -> Self {
         ComponentMsg::Local(value)
     }
+}
+
+impl<T> From<ComponentMsg<T>> for ComponentReturn<T> {
+    fn from(value: ComponentMsg<T>) -> Self {
+        ComponentReturn {
+            msg: Some(value),
+            cmd: None,
+        }
+    }
+}
+
+#[derive(Clone)]
+pub enum ComponentEvent {
+    Event(Event),
+    Show,
+    Hide,
+    Tick,
 }

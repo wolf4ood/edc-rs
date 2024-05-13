@@ -1,9 +1,9 @@
-use std::time::Duration;
+use std::{collections::VecDeque, time::Duration};
 
 use crossterm::event;
 use ratatui::{backend::Backend, Terminal};
 
-use crate::components::{Component, ComponentMsg, GlobalMsg};
+use crate::components::{Component, ComponentEvent, ComponentMsg, GlobalMsg};
 
 pub struct Runner<C: Component> {
     tick_rate: Duration,
@@ -18,25 +18,26 @@ impl<C: Component + Send> Runner<C> {
     pub async fn run(&mut self, mut terminal: Terminal<impl Backend>) -> anyhow::Result<()> {
         terminal.clear()?;
 
+        let mut should_quit = false;
         loop {
+            if should_quit {
+                break;
+            }
             terminal.draw(|frame| C::view(&mut self.model, frame, frame.size()))?;
 
             if event::poll(self.tick_rate)? {
                 let evt = event::read()?;
+                let mut msgs = C::handle_event(&self.model, ComponentEvent::Event(evt))?
+                    .into_iter()
+                    .collect::<VecDeque<_>>();
 
-                if let Some(mut msg) = C::handle_event(&self.model, evt)? {
-                    let should_quit = matches!(msg, ComponentMsg::Global(GlobalMsg::Quit));
-                    loop {
-                        let new_msg = C::update(&mut self.model, msg).await?;
+                while let Some(msg) = msgs.pop_front() {
+                    should_quit = matches!(msg, ComponentMsg::Global(GlobalMsg::Quit));
 
-                        if let Some(m) = new_msg {
-                            msg = m;
-                        } else {
-                            break;
-                        }
-                    }
-                    if should_quit {
-                        break;
+                    let ret = C::update(&mut self.model, msg).await?;
+
+                    if let Some(new_msg) = ret.msg {
+                        msgs.push_back(new_msg);
                     }
                 }
             };

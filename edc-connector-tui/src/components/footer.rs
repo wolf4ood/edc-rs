@@ -1,5 +1,5 @@
 use self::{model::FooterModel, msg::FooterMsg};
-use super::{Component, ComponentMsg};
+use super::{Component, ComponentEvent, ComponentMsg, ComponentReturn};
 use ratatui::{
     layout::Rect,
     style::Style,
@@ -30,26 +30,43 @@ impl Component for Footer {
     async fn update(
         model: &mut Self::Model,
         msg: ComponentMsg<Self::Msg>,
-    ) -> anyhow::Result<Option<ComponentMsg<Self::Msg>>> {
+    ) -> anyhow::Result<ComponentReturn<Self::Msg>> {
         match msg {
             ComponentMsg::Local(FooterMsg::AppendCommand(input)) => {
                 model.area.input(input);
             }
             _ => {}
         };
-        Ok(None)
+        Ok(ComponentReturn::empty())
     }
 
     fn handle_event(
-        _model: &Self::Model,
-        evt: crossterm::event::Event,
-    ) -> anyhow::Result<Option<ComponentMsg<Self::Msg>>> {
-        let input: Input = evt.into();
+        model: &Self::Model,
+        evt: ComponentEvent,
+    ) -> anyhow::Result<Vec<ComponentMsg<Self::Msg>>> {
+        if let ComponentEvent::Event(evt) = evt {
+            let input: Input = evt.into();
 
-        if input.key == Key::Esc {
-            Ok(Some(ComponentMsg::Global(super::GlobalMsg::Esc)))
+            let current = &model.area.lines()[0];
+            match input.key {
+                Key::Char('q') if current.is_empty() => Ok(vec![
+                    ComponentMsg::Local(FooterMsg::AppendCommand(input)),
+                    ComponentMsg::Local(FooterMsg::AppendCommand(Input {
+                        key: Key::Char('!'),
+                        ..Default::default()
+                    })),
+                ]),
+                Key::Enter if current == "q!" => {
+                    Ok(vec![ComponentMsg::Global(super::GlobalMsg::Quit)])
+                }
+                Key::Enter => Ok(vec![ComponentMsg::Global(super::GlobalMsg::NavTo(
+                    model.area.lines()[0].parse()?,
+                ))]),
+                Key::Esc => Ok(vec![ComponentMsg::Global(super::GlobalMsg::Esc)]),
+                _ => Ok(vec![ComponentMsg::Local(FooterMsg::AppendCommand(input))]),
+            }
         } else {
-            Ok(Some(ComponentMsg::Local(FooterMsg::AppendCommand(input))))
+            Ok(vec![])
         }
     }
 }

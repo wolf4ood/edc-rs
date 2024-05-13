@@ -1,8 +1,11 @@
 use edc_connector_client::EdcConnectorClient;
 
 use crate::{
-    components::{connectors::model::ConnectorsModel, footer::model::FooterModel},
+    components::{
+        assets::model::AssetsModel, connectors::model::ConnectorsModel, footer::model::FooterModel,
+    },
     config::Config,
+    nav::Nav,
     types::connector::Connector,
 };
 
@@ -11,7 +14,9 @@ pub struct AppModel {
     pub(crate) connectors: ConnectorsModel,
     pub(crate) footer: FooterModel,
     pub(crate) focus: AppFocus,
+    pub(crate) assets: AssetsModel,
     pub(crate) footer_visible: bool,
+    pub(crate) nav: Nav,
 }
 
 impl AppModel {
@@ -39,6 +44,8 @@ impl AppModel {
             footer,
             focus: AppFocus::ConnectorList,
             footer_visible: false,
+            assets: AssetsModel::default(),
+            nav: Nav::default(),
         }
     }
 }
@@ -48,4 +55,5 @@ pub enum AppFocus {
     #[default]
     ConnectorList,
     Footer,
+    Assets,
 }

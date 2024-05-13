@@ -1,4 +1,4 @@
-use crossterm::event::{KeyCode, KeyEvent};
+use crossterm::event::{Event, KeyCode, KeyEvent};
 use ratatui::{
     layout::{Alignment, Constraint, Rect},
     style::{Color, Modifier, Style},
@@ -9,7 +9,7 @@ use ratatui::{
 
 use self::{model::ConnectorsModel, msg::ConnectorsMsg};
 
-use super::{Component, ComponentMsg};
+use super::{Component, ComponentEvent, ComponentMsg, ComponentReturn};
 
 pub mod model;
 pub mod msg;
@@ -57,43 +57,44 @@ impl Component for Connectors {
     async fn update(
         model: &mut Self::Model,
         msg: ComponentMsg<Self::Msg>,
-    ) -> anyhow::Result<Option<ComponentMsg<Self::Msg>>> {
+    ) -> anyhow::Result<ComponentReturn<Self::Msg>> {
         match msg {
             ComponentMsg::Local(ConnectorsMsg::MoveUp) => Self::move_up(model),
             ComponentMsg::Local(ConnectorsMsg::MoveDown) => Self::move_down(model),
             ComponentMsg::Local(ConnectorsMsg::SelectCurrent) => {
                 if let Some(idx) = model.table_state.selected() {
                     if let Some(connector) = model.connectors.get(idx) {
-                        return Ok(Some(ComponentMsg::Shared(
-                            super::SharedMsg::ChangeConnector(connector.clone()),
-                        )));
+                        return Ok(ComponentMsg::Shared(super::SharedMsg::ChangeConnector(
+                            connector.clone(),
+                        ))
+                        .into());
                     }
                 }
             }
             _ => {}
         };
 
-        Ok(None)
+        Ok(ComponentReturn::empty())
     }
 
     fn handle_event(
         _model: &Self::Model,
-        evt: crossterm::event::Event,
-    ) -> anyhow::Result<Option<super::ComponentMsg<Self::Msg>>> {
+        evt: ComponentEvent,
+    ) -> anyhow::Result<Vec<ComponentMsg<Self::Msg>>> {
         match evt {
-            crossterm::event::Event::Key(key) => Ok(Self::handle_key(key)),
-            _ => Ok(None),
+            ComponentEvent::Event(Event::Key(key)) => Ok(Self::handle_key(key)),
+            _ => Ok(vec![]),
         }
     }
 }
 
 impl Connectors {
-    fn handle_key(key: KeyEvent) -> Option<ComponentMsg<ConnectorsMsg>> {
+    fn handle_key(key: KeyEvent) -> Vec<ComponentMsg<ConnectorsMsg>> {
         match key.code {
-            KeyCode::Char('j') => Some(ComponentMsg::Local(ConnectorsMsg::MoveDown)),
-            KeyCode::Char('k') => Some(ComponentMsg::Local(ConnectorsMsg::MoveUp)),
-            KeyCode::Enter => Some(ComponentMsg::Local(ConnectorsMsg::SelectCurrent)),
-            _ => None,
+            KeyCode::Char('j') => vec![(ComponentMsg::Local(ConnectorsMsg::MoveDown))],
+            KeyCode::Char('k') => vec![(ComponentMsg::Local(ConnectorsMsg::MoveUp))],
+            KeyCode::Enter => vec![(ComponentMsg::Local(ConnectorsMsg::SelectCurrent))],
+            _ => vec![],
         }
     }
 
