@@ -39,6 +39,12 @@ impl<C: Component + Send> Runner<C> {
                     for m in ret.msgs {
                         msgs.push_back(m);
                     }
+
+                    for c in ret.cmds {
+                        for m in c.await.unwrap() {
+                            msgs.push_back(m);
+                        }
+                    }
                 }
             };
         }

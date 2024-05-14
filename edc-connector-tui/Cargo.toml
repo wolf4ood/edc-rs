@@ -15,5 +15,6 @@ toml = "0.8.12"
 futures = "0.3.30"
 tokio = {workspace=true}
 serde = {workspace=true}
+serde_json = {workspace=true}
 async-trait = {workspace=true}
 edc-connector-client = { path = "../edc-connector-client", version = "0.1.0"}

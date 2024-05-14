@@ -309,6 +309,7 @@ dependencies = [
  "futures",
  "ratatui",
  "serde",
+ "serde_json",
  "tokio",
  "toml",
  "tui-textarea",

@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, sync::Arc};
 
 use crossterm::event::Event;
 use futures::{future::BoxFuture, FutureExt};
@@ -9,6 +9,7 @@ use crate::{nav::Nav, types::connector::Connector};
 pub mod assets;
 pub mod connectors;
 pub mod footer;
+pub mod table;
 
 #[async_trait::async_trait]
 pub trait Component {
@@ -27,15 +28,14 @@ pub trait Component {
         evt: ComponentEvent,
     ) -> anyhow::Result<Vec<ComponentMsg<Self::Msg>>>;
 
-    async fn forward_update<F, C>(
-        model: &mut C::Model,
+    async fn forward_update<'a, F, C>(
+        model: &'a mut C::Model,
         msg: ComponentMsg<C::Msg>,
         mapper: F,
     ) -> anyhow::Result<ComponentReturn<Self::Msg>>
     where
-        F: Fn(C::Msg) -> Self::Msg + Send + Sync,
-        F: 'static,
-        C: Component + Sync + Send,
+        F: Fn(C::Msg) -> Self::Msg + Send + Sync + 'a,
+        C: Component + Sync + Send + 'a,
     {
         Ok(C::update(model, msg).await?.map(mapper))
     }
@@ -64,12 +64,12 @@ pub enum ComponentMsg<T> {
 }
 
 #[derive(Default)]
-pub struct ComponentReturn<T> {
+pub struct ComponentReturn<'a, T> {
     pub(crate) msgs: Vec<ComponentMsg<T>>,
-    pub(crate) cmds: Vec<BoxFuture<'static, anyhow::Result<Vec<ComponentMsg<T>>>>>,
+    pub(crate) cmds: Vec<BoxFuture<'a, anyhow::Result<Vec<ComponentMsg<T>>>>>,
 }
 
-impl<T: Debug> Debug for ComponentReturn<T> {
+impl<'a, T: Debug> Debug for ComponentReturn<'a, T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("ComponentReturn")
             .field("msgs", &self.msgs)
@@ -103,18 +103,23 @@ impl<T> ComponentMsg<T> {
     }
 }
 
-impl<T> ComponentReturn<T> {
-    pub fn empty() -> ComponentReturn<T> {
+impl<'a, T: 'a> ComponentReturn<'a, T> {
+    pub fn cmd(cmd: BoxFuture<'a, anyhow::Result<Vec<ComponentMsg<T>>>>) -> ComponentReturn<'a, T> {
+        ComponentReturn {
+            msgs: vec![],
+            cmds: vec![cmd],
+        }
+    }
+    pub fn empty() -> ComponentReturn<'a, T> {
         ComponentReturn {
             msgs: vec![],
             cmds: vec![],
         }
     }
 
-    pub fn map<M, F>(self, mapper: F) -> ComponentReturn<M>
+    pub fn map<M, F>(self, mapper: F) -> ComponentReturn<'a, M>
     where
-        F: Fn(T) -> M + Sync + Send,
-        F: 'static,
+        F: Fn(T) -> M + Sync + Send + 'a,
     {
         let msgs = self
             .msgs
@@ -122,17 +127,18 @@ impl<T> ComponentReturn<T> {
             .map(|msg| Self::map_msg(msg, &mapper))
             .collect();
 
+        let shared = Arc::new(mapper);
         let cmds = self
             .cmds
             .into_iter()
             .map(|fut| {
-                let inner_mapper = mapper;
+                let inner_mapper = shared.clone();
                 async move {
                     let msgs = fut.await?;
 
                     Ok(msgs
                         .into_iter()
-                        .map(|msg| Self::map_msg(msg, &inner_mapper))
+                        .map(|msg| Self::map_msg(msg, inner_mapper.as_ref()))
                         .collect())
                 }
                 .boxed()
@@ -142,7 +148,7 @@ impl<T> ComponentReturn<T> {
         ComponentReturn { msgs, cmds }
     }
 
-    pub fn merge(mut self, mut other: ComponentReturn<T>) -> ComponentReturn<T> {
+    pub fn merge(mut self, mut other: ComponentReturn<'a, T>) -> ComponentReturn<T> {
         self.cmds.append(&mut other.cmds);
         self.msgs.append(&mut other.msgs);
         self
@@ -166,7 +172,7 @@ impl<T> From<T> for ComponentMsg<T> {
     }
 }
 
-impl<T> From<ComponentMsg<T>> for ComponentReturn<T> {
+impl<T> From<ComponentMsg<T>> for ComponentReturn<'_, T> {
     fn from(value: ComponentMsg<T>) -> Self {
         ComponentReturn {
             msgs: vec![value],

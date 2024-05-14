@@ -18,6 +18,10 @@ impl Connector {
     pub fn config(&self) -> &ConnectorConfig {
         &self.config
     }
+
+    pub fn client(&self) -> &EdcConnectorClient {
+        &self.client
+    }
 }
 
 impl Debug for Connector {

@@ -1,19 +1,20 @@
 use std::fmt::Debug;
 
-use edc_connector_client::EdcConnectorClient;
-use ratatui::widgets::TableState;
+use crate::{components::table::model::TableModel, types::connector::Connector};
 
-#[derive(Default)]
+use super::AssetEntry;
+
+#[derive(Debug)]
 pub struct AssetsModel {
-    pub(crate) table_state: TableState,
-    pub(crate) client: Option<EdcConnectorClient>,
+    pub(crate) table: TableModel<AssetEntry>,
+    pub(crate) client: Option<Connector>,
 }
 
-impl Debug for AssetsModel {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("AssetsModel")
-            .field("table_state", &self.table_state)
-            .field("client", &"EdcConnectorClient")
-            .finish()
+impl Default for AssetsModel {
+    fn default() -> Self {
+        Self {
+            table: TableModel::new("Assets".to_string()),
+            client: Default::default(),
+        }
     }
 }
