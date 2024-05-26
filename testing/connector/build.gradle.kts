@@ -15,7 +15,6 @@ dependencies {
     implementation(libs.edc.control.plane.edr.receiver)
     implementation(libs.edc.dsp)
     implementation(libs.edc.configuration.filesystem)
-    implementation(libs.edc.vault.filesystem)
     implementation(libs.edc.iam.mock)
     implementation(libs.edc.management.api)
     implementation(libs.edc.cache.api)

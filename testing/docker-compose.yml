@@ -27,6 +27,7 @@ services:
       - "29193:9193" # connector management
       - "29194:9194" # connector protocol
       - "29291:9291" # data-plane public
+      - "1044:1044" # data-plane public
     environment:
       EDC_VAULT: /config/vault.properties
       EDC_KEYSTORE: /config/vault-keys.p12
