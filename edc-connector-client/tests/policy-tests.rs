@@ -138,7 +138,7 @@ mod get {
 
         let permission = &definition.policy().permissions()[0];
 
-        assert_eq!(permission.action().id(), "http://www.w3.org/ns/odrl/2/use");
+        assert_eq!(permission.action().id(), "odrl:use");
         assert_eq!(permission.constraints().len(), 1);
 
         let constraint = &permission.constraints()[0];
@@ -146,7 +146,7 @@ mod get {
         assert_eq!(
             constraint,
             &Constraint::Atomic(AtomicConstraint::new_with_operator(
-                "https://w3id.org/edc/v0.0.1/ns/foo",
+                "edc:foo",
                 Operator::id("odrl:eq"),
                 "bar"
             ))

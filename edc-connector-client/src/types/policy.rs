@@ -249,14 +249,13 @@ pub struct Permission {
     #[serde(rename = "constraint", alias = "odrl:constraint", default)]
     constraints: Vec<Constraint>,
     #[serde(alias = "odrl:action")]
-    #[serde(deserialize_with = "crate::types::policy::odrl::action_deserializer")]
     action: Action,
 }
 
 impl Permission {
     pub fn builder() -> PermissionBuilder {
         PermissionBuilder(Permission {
-            action: Action::new("use".to_string()),
+            action: Action::new("http://www.w3.org/ns/odrl/2/use".to_string()),
             constraints: vec![],
         })
     }
@@ -288,18 +287,28 @@ impl PermissionBuilder {
     }
 }
 
-#[derive(Debug, Serialize, PartialEq, Clone)]
-pub struct Action(String);
+#[derive(Debug, Serialize, PartialEq, Clone, Deserialize)]
+#[serde(untagged)]
+pub enum Action {
+    Simple(String),
+    Id {
+        #[serde(rename = "@id")]
+        id: String,
+    },
+}
 
 impl Action {
     pub fn id(&self) -> &String {
-        &self.0
+        match self {
+            Action::Simple(id) => id,
+            Action::Id { id } => id,
+        }
     }
 }
 
 impl Action {
     pub fn new(kind: String) -> Self {
-        Action(kind)
+        Action::Id { id: kind }
     }
 }
 
@@ -310,9 +319,29 @@ pub enum Constraint {
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+#[serde(untagged)]
+pub enum LeftOperand {
+    Simple(String),
+    Id {
+        #[serde(rename = "@id")]
+        id: String,
+    },
+}
+
+impl LeftOperand {
+    pub fn simple(op: &str) -> LeftOperand {
+        LeftOperand::Simple(op.to_string())
+    }
+
+    pub fn id(op: &str) -> LeftOperand {
+        LeftOperand::Id { id: op.to_string() }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct AtomicConstraint {
     #[serde(rename = "leftOperand", alias = "odrl:leftOperand")]
-    left_operand: String,
+    left_operand: LeftOperand,
     #[serde(alias = "odrl:operator")]
     operator: Operator,
     #[serde(rename = "rightOperand", alias = "odrl:rightOperand")]
@@ -342,21 +371,29 @@ impl Operator {
 impl AtomicConstraint {
     pub fn new<T: ToValue>(left_operand: &str, operator: &str, right_operand: T) -> Self {
         AtomicConstraint::new_with_operator(
-            left_operand,
+            LeftOperand::Simple(left_operand.to_string()),
             Operator::Simple(operator.to_string()),
             right_operand,
         )
     }
 
     pub fn new_with_operator<T: ToValue>(
-        left_operand: &str,
+        left_operand: impl Into<LeftOperand>,
         operator: Operator,
         right_operand: T,
     ) -> Self {
         Self {
-            left_operand: left_operand.to_string(),
+            left_operand: left_operand.into(),
             operator,
             right_operand: PropertyValue(right_operand.into_value()),
+        }
+    }
+}
+
+impl From<&str> for LeftOperand {
+    fn from(value: &str) -> Self {
+        LeftOperand::Id {
+            id: value.to_string(),
         }
     }
 }

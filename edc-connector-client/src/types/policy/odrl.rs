@@ -1,50 +1,3 @@
-use std::fmt;
-
-use serde::{
-    de::{MapAccess, Visitor},
-    Deserializer,
-};
-
-use crate::types::policy::Action;
-
-pub(crate) fn action_deserializer<'de, D>(deserializer: D) -> Result<Action, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    struct ActionVisitor;
-
-    impl<'de> Visitor<'de> for ActionVisitor {
-        type Value = Action;
-
-        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-            formatter.write_str("string or map")
-        }
-
-        fn visit_str<E>(self, value: &str) -> Result<Action, E>
-        where
-            E: serde::de::Error,
-        {
-            Ok(Action(value.to_string()))
-        }
-
-        fn visit_map<M>(self, mut map: M) -> Result<Action, M::Error>
-        where
-            M: MapAccess<'de>,
-        {
-            let mut action = None;
-            while let Some(key) = map.next_key::<String>()? {
-                match key.as_str() {
-                    "action" | "odrl:type" | "type" => action = Some(Action(map.next_value()?)),
-                    _ => {}
-                }
-            }
-            action.ok_or_else(|| serde::de::Error::missing_field("action"))
-        }
-    }
-
-    deserializer.deserialize_any(ActionVisitor)
-}
-
 #[cfg(test)]
 mod tests {
     use serde_json::json;
@@ -71,7 +24,6 @@ mod tests {
 
         let policy = serde_json::from_value::<Policy>(json).unwrap();
 
-        dbg!(&policy);
         assert_eq!(policy.kind(), &PolicyKind::Set);
         assert_eq!(policy.permissions().len(), 1);
 
@@ -99,10 +51,12 @@ mod tests {
             "@type": "odrl:Set",
             "odrl:permission": {
                 "odrl:action": {
-                    "odrl:type": "http://www.w3.org/ns/odrl/2/use"
+                    "@id": "http://www.w3.org/ns/odrl/2/use"
                 },
                 "odrl:constraint": {
-                    "odrl:leftOperand": "https://w3id.org/edc/v0.0.1/ns/foo",
+                    "odrl:leftOperand": {
+                      "@id": "https://w3id.org/edc/v0.0.1/ns/foo"
+                    },
                     "odrl:operator": {
                         "@id": "odrl:eq"
                     },
