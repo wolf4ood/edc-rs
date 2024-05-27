@@ -249,7 +249,6 @@ pub struct Permission {
     #[serde(rename = "constraint", alias = "odrl:constraint", default)]
     constraints: Vec<Constraint>,
     #[serde(alias = "odrl:action")]
-    #[serde(deserialize_with = "crate::types::policy::odrl::action_deserializer")]
     action: Action,
 }
 
@@ -288,18 +287,28 @@ impl PermissionBuilder {
     }
 }
 
-#[derive(Debug, Serialize, PartialEq, Clone)]
-pub struct Action(String);
+#[derive(Debug, Serialize, PartialEq, Clone, Deserialize)]
+#[serde(untagged)]
+pub enum Action {
+    Simple(String),
+    Id {
+        #[serde(rename = "@id")]
+        id: String,
+    },
+}
 
 impl Action {
     pub fn id(&self) -> &String {
-        &self.0
+        match self {
+            Action::Simple(id) => id,
+            Action::Id { id } => id,
+        }
     }
 }
 
 impl Action {
     pub fn new(kind: String) -> Self {
-        Action(kind)
+        Action::Id { id: kind }
     }
 }
 
@@ -310,9 +319,16 @@ pub enum Constraint {
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+#[serde(untagged)]
+pub enum LeftOperand {
+    Simple(String),
+    Id { id: String },
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct AtomicConstraint {
     #[serde(rename = "leftOperand", alias = "odrl:leftOperand")]
-    left_operand: String,
+    left_operand: LeftOperand,
     #[serde(alias = "odrl:operator")]
     operator: Operator,
     #[serde(rename = "rightOperand", alias = "odrl:rightOperand")]
@@ -354,7 +370,9 @@ impl AtomicConstraint {
         right_operand: T,
     ) -> Self {
         Self {
-            left_operand: left_operand.to_string(),
+            left_operand: LeftOperand::Id {
+                id: left_operand.to_string(),
+            },
             operator,
             right_operand: PropertyValue(right_operand.into_value()),
         }
