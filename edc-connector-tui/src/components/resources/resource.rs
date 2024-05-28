@@ -2,11 +2,11 @@ use ratatui::{
     layout::{Alignment, Constraint, Layout, Rect},
     style::{Color, Style, Styled},
     text::{Line, Span},
-    widgets::{block::Title, Block, BorderType, Borders, List},
+    widgets::{block::Title, Block, BorderType, Borders, Paragraph},
     Frame,
 };
 
-use super::{Component, DrawableResource};
+use super::{Component, DrawableResource, Field, FieldValue};
 
 #[derive(Debug)]
 pub struct ResourceComponent<T> {
@@ -39,7 +39,10 @@ impl<T: DrawableResource> ResourceComponent<T> {
         if let Some(res) = self.resource.as_ref() {
             res.fields()
                 .into_iter()
-                .map(|f| Constraint::Min(1))
+                .map(|f| match f.value {
+                    FieldValue::Str(_) => Constraint::Length(3),
+                    FieldValue::Json(_) => Constraint::Min(5),
+                })
                 .collect()
         } else {
             vec![]
@@ -72,38 +75,37 @@ impl<T: DrawableResource + Send> Component for ResourceComponent<T> {
             let area = block.inner(rect);
             let layout = Layout::vertical(constraints).split(area);
             if let Some(res) = self.resource.as_ref() {
-                let lines = res
-                    .fields()
-                    .into_iter()
-                    .map(|field| {
-                        Line::from(vec![
-                            format!("{}: ", field.name).set_style(Color::Yellow),
-                            field.value.as_ref().to_string().into(),
-                        ])
-                    })
-                    .collect::<Vec<Line>>();
-
-                for (idx, elem) in lines.iter().enumerate() {
-                    f.render_widget(elem, layout[idx]);
+                for (idx, elem) in res.fields().into_iter().enumerate() {
+                    let mut field = FieldComponent::new(elem);
+                    field.view(f, layout[idx]);
                 }
             }
         }
-        // let list = if let Some(res) = self.resource.as_ref() {
-        //     let lines = res
-        //         .fields()
-        //         .into_iter()
-        //         .map(|field| {
-        //             Line::from(vec![
-        //                 format!("{}: ", field.name).set_style(Color::Yellow),
-        //                 field.value.as_ref().to_string().into(),
-        //             ])
-        //         })
-        //         .collect::<Vec<Line>>();
-        //     List::new(lines).block(block)
-        // } else {
-        //     List::new(vec!["Test"]).block(block)
-        // };
 
         f.render_widget(block, rect);
+    }
+}
+
+pub struct FieldComponent(Field);
+
+impl FieldComponent {
+    pub fn new(field: Field) -> Self {
+        Self(field)
+    }
+}
+
+impl Component for FieldComponent {
+    type Msg = ();
+
+    type Props = Field;
+
+    fn view(&mut self, f: &mut Frame, rect: Rect) {
+        let layout = Layout::horizontal(vec![Constraint::Min(2), Constraint::Min(2)]).split(rect);
+        let line = Line::from(vec![format!("{}: ", self.0.name).set_style(Color::Yellow)]);
+        let name = Paragraph::new(line);
+        let value = Paragraph::new(self.0.value.as_ref()).block(Block::bordered());
+
+        f.render_widget(name, layout[0]);
+        f.render_widget(value, layout[1]);
     }
 }

@@ -54,14 +54,21 @@ impl DrawableResource for AssetEntry {
     fn fields(&self) -> Vec<super::resources::Field> {
         let mut fields = vec![Field::new(
             "id".to_string(),
-            super::resources::FieldValue::Str(self.0.id().to_string()),
+            FieldValue::Str(self.0.id().to_string()),
         )];
-
-        let properties = self.0.properties();
 
         fields.push(Field::new(
             "properties".to_string(),
-            FieldValue::Json(serde_json::to_string(&properties).unwrap()),
+            FieldValue::Json(serde_json::to_string_pretty(&self.0.properties()).unwrap()),
+        ));
+
+        fields.push(Field::new(
+            "private_properties".to_string(),
+            FieldValue::Json(serde_json::to_string_pretty(&self.0.private_properties()).unwrap()),
+        ));
+        fields.push(Field::new(
+            "data_address".to_string(),
+            FieldValue::Json(serde_json::to_string_pretty(self.0.data_address()).unwrap()),
         ));
 
         fields
