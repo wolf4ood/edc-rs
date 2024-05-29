@@ -15,13 +15,14 @@ pub struct InfoComponent {}
 impl StatelessComponent for InfoComponent {
     type Props = Sheet;
 
-    fn view(&mut self, props: Self::Props, f: &mut Frame, rect: Rect) {
+    fn view(&mut self, props: &Self::Props, f: &mut Frame, rect: Rect) {
         let list = props
             .iter()
             .map(|(name, value)| {
                 Line::from(vec![
                     name.to_string()
                         .set_style(Style::default().fg(Color::Yellow)),
+                    Span::raw(":").set_style(Style::default().fg(Color::Yellow)),
                     Span::raw(value),
                 ])
             })

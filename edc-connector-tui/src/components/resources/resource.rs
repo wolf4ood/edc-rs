@@ -1,10 +1,12 @@
 use ratatui::{
     layout::{Alignment, Constraint, Layout, Rect},
-    style::{Color, Style, Styled},
-    text::{Line, Span},
+    style::{Color, Style},
+    text::Span,
     widgets::{block::Title, Block, BorderType, Borders, Paragraph},
     Frame,
 };
+
+use crate::components::StatelessComponent;
 
 use super::{Component, DrawableResource, Field, FieldValue};
 
@@ -76,8 +78,8 @@ impl<T: DrawableResource + Send> Component for ResourceComponent<T> {
             let layout = Layout::vertical(constraints).split(area);
             if let Some(res) = self.resource.as_ref() {
                 for (idx, elem) in res.fields().into_iter().enumerate() {
-                    let mut field = FieldComponent::new(elem);
-                    field.view(f, layout[idx]);
+                    let mut field = FieldComponent;
+                    field.view(&elem, f, layout[idx]);
                 }
             }
         }
@@ -86,26 +88,19 @@ impl<T: DrawableResource + Send> Component for ResourceComponent<T> {
     }
 }
 
-pub struct FieldComponent(Field);
+pub struct FieldComponent;
 
-impl FieldComponent {
-    pub fn new(field: Field) -> Self {
-        Self(field)
-    }
-}
-
-impl Component for FieldComponent {
-    type Msg = ();
-
+impl StatelessComponent for FieldComponent {
     type Props = Field;
 
-    fn view(&mut self, f: &mut Frame, rect: Rect) {
-        let layout = Layout::horizontal(vec![Constraint::Min(2), Constraint::Min(2)]).split(rect);
-        let line = Line::from(vec![format!("{}: ", self.0.name).set_style(Color::Yellow)]);
-        let name = Paragraph::new(line);
-        let value = Paragraph::new(self.0.value.as_ref()).block(Block::bordered());
+    fn view(&mut self, props: &Self::Props, f: &mut Frame, rect: Rect) {
+        let styled_text = Span::styled(
+            format!(" {} ", props.name),
+            Style::default().fg(Color::Yellow),
+        );
+        let value =
+            Paragraph::new(props.value.as_ref()).block(Block::bordered().title(styled_text));
 
-        f.render_widget(name, layout[0]);
-        f.render_widget(value, layout[1]);
+        f.render_widget(value, rect)
     }
 }

@@ -14,7 +14,7 @@ pub mod msg;
 pub type ConnectorsTable = UiTable<ConnectorEntry, Box<ConnectorsMsg>>;
 
 #[derive(Debug, Default)]
-pub struct Connectors {
+pub struct ConnectorsComponent {
     table: ConnectorsTable,
     selected: Option<Connector>,
 }
@@ -33,7 +33,7 @@ impl TableEntry for ConnectorEntry {
 }
 
 #[async_trait::async_trait]
-impl Component for Connectors {
+impl Component for ConnectorsComponent {
     type Msg = ConnectorsMsg;
     type Props = ();
 
@@ -72,7 +72,7 @@ impl Component for Connectors {
     }
 }
 
-impl Connectors {
+impl ConnectorsComponent {
     pub fn new(connectors: Vec<Connector>) -> Self {
         Self {
             table: ConnectorsTable::with_elements(

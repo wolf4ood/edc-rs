@@ -2,7 +2,7 @@ use edc_connector_client::types::policy::PolicyDefinition;
 use ratatui::widgets::Row;
 
 use super::{
-    resources::{msg::ResourcesMsg, DrawableResource, ResourcesComponent},
+    resources::{msg::ResourcesMsg, DrawableResource, Field, FieldValue, ResourcesComponent},
     table::TableEntry,
 };
 
@@ -39,6 +39,16 @@ impl DrawableResource for PolicyDefinitionEntry {
     }
 
     fn fields(&self) -> Vec<super::resources::Field> {
-        vec![]
+        let mut fields = vec![Field::new(
+            "id".to_string(),
+            FieldValue::Str(self.0.id().to_string()),
+        )];
+
+        fields.push(Field::new(
+            "policy".to_string(),
+            FieldValue::Json(serde_json::to_string_pretty(&self.0.policy()).unwrap()),
+        ));
+
+        fields
     }
 }

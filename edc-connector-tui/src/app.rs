@@ -14,7 +14,7 @@ use ratatui::{
 use crate::{
     components::{
         assets::{AssetEntry, AssetsComponent},
-        connectors::Connectors,
+        connectors::ConnectorsComponent,
         footer::Footer,
         header::HeaderComponent,
         launch_bar::LaunchBar,
@@ -24,15 +24,14 @@ use crate::{
     },
     config::Config,
     types::{
-        connector::Connector,
-        nav::{Menu, Nav},
+        connector::Connector, info::Sheet, nav::{Menu, Nav}
     },
 };
 
 use self::{model::AppFocus, msg::AppMsg};
 
 pub struct App {
-    connectors: Connectors,
+    connectors: ConnectorsComponent,
     policies: PolicyDefinitionsComponent,
     assets: AssetsComponent,
     launch_bar: LaunchBar,
@@ -55,7 +54,7 @@ impl App {
                 Connector::new(cfg, client)
             })
             .collect();
-        let connectors = Connectors::new(connectors);
+        let connectors = ConnectorsComponent::new(connectors);
 
         App {
             connectors,
@@ -65,7 +64,7 @@ impl App {
             launch_bar_visible: false,
             focus: AppFocus::ConnectorList,
             footer: Footer::default(),
-            header: HeaderComponent::default(),
+            header: HeaderComponent::with_sheet(Sheet::default().add("Connector", "N/A")),
         }
     }
 
@@ -134,7 +133,7 @@ impl Component for App {
     ) -> anyhow::Result<ComponentReturn<AppMsg>> {
         match msg.to_owned() {
             AppMsg::ConnectorsMsg(m) => {
-                Self::forward_update::<_, Connectors>(
+                Self::forward_update::<_, ConnectorsComponent>(
                     &mut self.connectors,
                     m.into(),
                     AppMsg::ConnectorsMsg,
@@ -188,7 +187,7 @@ impl Component for App {
         evt: ComponentEvent,
     ) -> anyhow::Result<Vec<ComponentMsg<Self::Msg>>> {
         let msg = match self.focus {
-            AppFocus::ConnectorList => Self::forward_event::<_, Connectors>(
+            AppFocus::ConnectorList => Self::forward_event::<_, ConnectorsComponent>(
                 &mut self.connectors,
                 evt.clone(),
                 AppMsg::ConnectorsMsg,

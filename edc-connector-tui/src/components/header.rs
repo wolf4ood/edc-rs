@@ -20,11 +20,23 @@ pub mod msg;
 pub struct HeaderComponent {
     menu: Menu,
     info: InfoComponent,
+    sheet: Sheet,
 }
 
 impl HeaderComponent {
+    pub fn with_sheet(sheet: Sheet) -> HeaderComponent {
+        HeaderComponent {
+            menu: Menu::default(),
+            info: InfoComponent::default(),
+            sheet,
+        }
+    }
     pub fn set_selected_menu(&mut self, menu: impl Into<Menu>) {
         self.menu = menu.into();
+    }
+
+    pub fn update_sheet(&mut self, sheet: Sheet) {
+        self.sheet = sheet;
     }
 
     pub fn selected_menu(&self) -> &Menu {
@@ -51,7 +63,7 @@ impl Component for HeaderComponent {
             .divider("|")
             .padding(" ", " ");
 
-        self.info.view(Sheet::default(), f, layout[0]);
+        self.info.view(&self.sheet, f, layout[0]);
         f.render_widget(tabs, layout[1]);
     }
 

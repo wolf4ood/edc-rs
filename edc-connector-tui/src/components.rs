@@ -18,7 +18,7 @@ pub mod table;
 pub trait StatelessComponent {
     type Props: Send;
 
-    fn view(&mut self, props: Self::Props, f: &mut Frame, rect: Rect);
+    fn view(&mut self, props: &Self::Props, f: &mut Frame, rect: Rect);
 }
 
 #[async_trait::async_trait]
