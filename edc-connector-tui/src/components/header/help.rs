@@ -6,18 +6,18 @@ use ratatui::{
     Frame,
 };
 
-use crate::{components::StatelessComponent, types::info::Sheet};
+use crate::{components::StatelessComponent, types::info::InfoSheet};
 
 #[derive(Default)]
 pub struct InfoComponent {}
 
 #[async_trait::async_trait]
 impl StatelessComponent for InfoComponent {
-    type Props = Sheet;
+    type Props = InfoSheet;
 
     fn view(&mut self, props: &Self::Props, f: &mut Frame, rect: Rect) {
         let list = props
-            .iter()
+            .iter_info()
             .map(|(name, value)| {
                 Line::from(vec![
                     name.to_string()

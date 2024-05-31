@@ -7,7 +7,7 @@ use ratatui::{
     Frame,
 };
 
-use crate::types::{info::Sheet, nav::Menu};
+use crate::types::{info::InfoSheet, nav::Menu};
 
 use self::{help::InfoComponent, msg::HeaderMsg};
 
@@ -20,11 +20,11 @@ pub mod msg;
 pub struct HeaderComponent {
     menu: Menu,
     info: InfoComponent,
-    sheet: Sheet,
+    sheet: InfoSheet,
 }
 
 impl HeaderComponent {
-    pub fn with_sheet(sheet: Sheet) -> HeaderComponent {
+    pub fn with_sheet(sheet: InfoSheet) -> HeaderComponent {
         HeaderComponent {
             menu: Menu::default(),
             info: InfoComponent::default(),
@@ -35,7 +35,7 @@ impl HeaderComponent {
         self.menu = menu.into();
     }
 
-    pub fn update_sheet(&mut self, sheet: Sheet) {
+    pub fn update_sheet(&mut self, sheet: InfoSheet) {
         self.sheet = sheet;
     }
 

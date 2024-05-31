@@ -1,12 +1,12 @@
 use ratatui::{layout::Rect, widgets::Row, Frame};
 
-use crate::types::{connector::Connector, nav::Nav};
+use crate::types::{connector::Connector, info::InfoSheet, nav::Nav};
 
 use self::msg::ConnectorsMsg;
 
 use super::{
     table::{msg::TableMsg, TableEntry, UiTable},
-    Component, ComponentEvent, ComponentMsg, ComponentReturn, Action,
+    Action, Component, ComponentEvent, ComponentMsg, ComponentReturn,
 };
 
 pub mod msg;
@@ -86,5 +86,17 @@ impl ConnectorsComponent {
 
     pub fn selected(&self) -> Option<&Connector> {
         self.selected.as_ref()
+    }
+
+    pub fn info_sheet(&self) -> InfoSheet {
+        if let Some(c) = self.selected.as_ref() {
+            InfoSheet::default()
+                .info("Connector Name", c.config().name())
+                .info("Connector Address", c.config().address())
+        } else {
+            InfoSheet::default()
+                .info("Connector Name", "n/a")
+                .info("Connector Address", "n/a")
+        }
     }
 }

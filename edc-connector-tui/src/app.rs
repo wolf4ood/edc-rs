@@ -24,7 +24,8 @@ use crate::{
     },
     config::Config,
     types::{
-        connector::Connector, info::Sheet, nav::{Menu, Nav}
+        connector::Connector,
+        nav::{Menu, Nav},
     },
 };
 
@@ -56,6 +57,7 @@ impl App {
             .collect();
         let connectors = ConnectorsComponent::new(connectors);
 
+        let sheet = connectors.info_sheet();
         App {
             connectors,
             policies: PolicyDefinitionsComponent::default().on_fetch(Self::fetch_policies),
@@ -64,7 +66,7 @@ impl App {
             launch_bar_visible: false,
             focus: AppFocus::ConnectorList,
             footer: Footer::default(),
-            header: HeaderComponent::with_sheet(Sheet::default().add("Connector", "N/A")),
+            header: HeaderComponent::with_sheet(sheet),
         }
     }
 
@@ -73,12 +75,15 @@ impl App {
         self.launch_bar.clear();
         self.header.set_selected_menu(nav);
 
-        match self.header.selected_menu() {
+         match self.header.selected_menu() {
             Menu::Connectors => {
                 self.focus = AppFocus::ConnectorList;
+                self.header.update_sheet(self.connectors.info_sheet());
+                Ok(ComponentReturn::empty())
             }
             Menu::Assets => {
                 self.focus = AppFocus::Assets;
+                self.header.update_sheet(self.connectors.info_sheet().merge(self.assets.info_sheet()));
                 if let Some(connector) = self.connectors.selected() {
                     return Self::forward_init(
                         &mut self.assets,
@@ -87,9 +92,11 @@ impl App {
                     )
                     .await;
                 }
+                Ok(ComponentReturn::empty())
             }
             Menu::Policies => {
                 self.focus = AppFocus::Policies;
+                self.header.update_sheet(self.connectors.info_sheet().merge(self.policies.info_sheet()));
                 if let Some(connector) = self.connectors.selected() {
                     return Self::forward_init(
                         &mut self.policies,
@@ -98,11 +105,15 @@ impl App {
                     )
                     .await;
                 }
+                Ok(ComponentReturn::empty())
             }
-            Menu::ContractDefinitions => {}
-        };
+            Menu::ContractDefinitions => {
+                Ok(ComponentReturn::empty())
+            }
+        }
 
-        Ok(ComponentReturn::empty())
+
+
     }
 }
 
@@ -235,7 +246,7 @@ impl App {
             .constraints(
                 [
                     Constraint::Length(10),
-                    Constraint::Percentage(if self.launch_bar_visible { 5 } else {0}),
+                    Constraint::Percentage(if self.launch_bar_visible { 5 } else { 0 }),
                     Constraint::Min(1),
                     Constraint::Length(3),
                 ]

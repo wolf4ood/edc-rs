@@ -5,7 +5,7 @@ use super::{
     table::{msg::TableMsg, TableEntry, UiTable},
     Component, ComponentEvent, ComponentMsg, ComponentReturn,
 };
-use crate::types::connector::Connector;
+use crate::types::{connector::Connector, info::InfoSheet};
 use crossterm::event::{Event, KeyCode};
 use futures::future::BoxFuture;
 use futures::FutureExt;
@@ -47,6 +47,10 @@ impl<T: TableEntry> ResourcesComponent<T> {
         }));
 
         self
+    }
+
+    pub fn info_sheet(&self) -> InfoSheet {
+        InfoSheet::default()
     }
 }
 

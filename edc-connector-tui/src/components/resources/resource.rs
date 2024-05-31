@@ -60,7 +60,7 @@ impl<T: DrawableResource + Send> Component for ResourceComponent<T> {
     fn view(&mut self, f: &mut Frame, rect: Rect) {
         let styled_text = Span::styled(
             format!(
-                "{}({}) ",
+                " {}({}) ",
                 self.name,
                 self.resource.as_ref().map(|a| a.id()).unwrap_or("N/A")
             ),
