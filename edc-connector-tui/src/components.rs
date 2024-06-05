@@ -14,6 +14,7 @@ pub mod launch_bar;
 pub mod policies;
 pub mod resources;
 pub mod table;
+pub mod contract_definitions;
 
 pub trait StatelessComponent {
     type Props: Send;
@@ -111,6 +112,7 @@ pub enum Action {
     Quit,
     Esc,
     NavTo(Nav),
+    ChangeSheet,
 }
 
 impl<T> ComponentMsg<T> {

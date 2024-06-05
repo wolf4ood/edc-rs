@@ -52,7 +52,7 @@ impl Component for HeaderComponent {
     fn view(&mut self, f: &mut Frame, rect: Rect) {
         let layout = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([Constraint::Percentage(60), Constraint::Percentage(40)].as_ref())
+            .constraints([Constraint::Percentage(30), Constraint::Percentage(70)].as_ref())
             .split(rect);
 
         let tabs = Tabs::new(Menu::names())
@@ -63,8 +63,8 @@ impl Component for HeaderComponent {
             .divider("|")
             .padding(" ", " ");
 
-        self.info.view(&self.sheet, f, layout[0]);
-        f.render_widget(tabs, layout[1]);
+        f.render_widget(tabs, layout[0]);
+        self.info.view(&self.sheet, f, layout[1]);
     }
 
     async fn update(

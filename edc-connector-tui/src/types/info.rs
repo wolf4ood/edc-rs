@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 
 #[derive(Default, Debug)]
 pub struct InfoSheet {
@@ -33,8 +33,8 @@ impl InfoSheet {
             .collect::<BTreeMap<String, String>>();
 
         let key_bindings = self
-            .iter_info()
-            .chain(other.iter_info())
+            .iter_key_bindings()
+            .chain(other.iter_key_bindings())
             .map(|(k, v)| (k.clone(), v.clone()))
             .collect::<BTreeMap<String, String>>();
 

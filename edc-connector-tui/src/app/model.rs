@@ -5,4 +5,5 @@ pub enum AppFocus {
     LaunchBar,
     Assets,
     Policies,
+    ContractDefinitions,
 }

@@ -1,6 +1,6 @@
 use ratatui::{
     layout::Rect,
-    widgets::{Block, BorderType, Borders},
+    widgets::{Block, Borders},
     Frame,
 };
 
@@ -17,9 +17,7 @@ impl Component for Footer {
     type Props = ();
 
     fn view(&mut self, f: &mut Frame, rect: Rect) {
-        let block = Block::default()
-            .borders(Borders::all())
-            .border_type(BorderType::Rounded);
+        let block = Block::default().borders(Borders::all());
         f.render_widget(block, rect)
     }
 }

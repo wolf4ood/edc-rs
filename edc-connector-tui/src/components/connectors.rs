@@ -28,7 +28,7 @@ impl TableEntry for ConnectorEntry {
     }
 
     fn headers() -> Row<'static> {
-        Row::new(vec!["NAME", "ADDRESS", "STATUS"])
+        Row::new(vec!["NAME", "ADDRESS"])
     }
 }
 

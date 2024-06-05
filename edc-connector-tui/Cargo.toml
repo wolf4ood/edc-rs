@@ -20,3 +20,4 @@ async-trait = {workspace=true}
 edc-connector-client = { path = "../edc-connector-client", version = "0.1.0"}
 enum-ordinalize = "4.3.0"
 strum = "0.26.2"
+arboard = { version = "3.4.0", features = ["wayland-data-control"] }

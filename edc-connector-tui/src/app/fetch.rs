@@ -1,7 +1,7 @@
 use edc_connector_client::types::query::Query;
 
 use crate::{
-    components::{assets::AssetEntry, policies::PolicyDefinitionEntry},
+    components::{assets::AssetEntry, contract_definitions::ContractDefinitionEntry, policies::PolicyDefinitionEntry},
     types::connector::Connector,
 };
 
@@ -16,6 +16,19 @@ impl App {
             .await?
             .into_iter()
             .map(AssetEntry::new)
+            .collect())
+    }
+
+    pub async fn fetch_contract_definitions(
+        connector: Connector,
+    ) -> anyhow::Result<Vec<ContractDefinitionEntry>> {
+        Ok(connector
+            .client()
+            .contract_definitions()
+            .query(Query::default())
+            .await?
+            .into_iter()
+            .map(ContractDefinitionEntry::new)
             .collect())
     }
 

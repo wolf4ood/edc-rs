@@ -5,10 +5,12 @@ use ratatui::{
     layout::{Alignment, Rect},
     style::{Color, Modifier, Style},
     text::Span,
-    widgets::{block::Title, Block, BorderType, Borders, Row, Table, TableState},
+    widgets::{block::Title, Block, Borders, Row, Table, TableState},
     Frame,
 };
 pub mod msg;
+
+use crate::types::info::InfoSheet;
 
 use self::msg::{TableLocalMsg, TableMsg};
 
@@ -56,7 +58,6 @@ impl<T: TableEntry + Send, M: Send> Component for UiTable<T, M> {
         let styled_text = Span::styled(format!(" {} ", self.name), Style::default().fg(Color::Red));
         let block = Block::default()
             .title(Title::from(styled_text).alignment(Alignment::Center))
-            .border_type(BorderType::Rounded)
             .borders(Borders::ALL);
 
         let rows = self
@@ -106,6 +107,10 @@ impl<T: TableEntry, M> UiTable<T, M> {
             table_state: TableState::default().with_selected(0),
             on_select: None,
         }
+    }
+
+    pub fn info_sheet(&self) -> InfoSheet {
+        InfoSheet::default()
     }
 
     pub fn with_elements(name: String, elements: Vec<T>) -> Self {

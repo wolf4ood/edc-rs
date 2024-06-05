@@ -2,14 +2,14 @@ use std::{fmt::Debug, sync::Arc};
 
 use self::{msg::ResourcesMsg, resource::ResourceComponent};
 use super::{
-    table::{msg::TableMsg, TableEntry, UiTable},
-    Component, ComponentEvent, ComponentMsg, ComponentReturn,
+    table::{msg::TableMsg, TableEntry, UiTable}, Action, Component, ComponentEvent, ComponentMsg, ComponentReturn
 };
 use crate::types::{connector::Connector, info::InfoSheet};
 use crossterm::event::{Event, KeyCode};
 use futures::future::BoxFuture;
 use futures::FutureExt;
 use ratatui::{layout::Rect, Frame};
+use serde::Serialize;
 use std::future::Future;
 pub mod msg;
 pub mod resource;
@@ -50,7 +50,10 @@ impl<T: TableEntry> ResourcesComponent<T> {
     }
 
     pub fn info_sheet(&self) -> InfoSheet {
-        InfoSheet::default()
+        match self.focus {
+            Focus::ResourceList => self.table.info_sheet(),
+            Focus::Resource => self.resource.info_sheet(),
+        }
     }
 }
 
@@ -105,15 +108,10 @@ impl<T: DrawableResource + TableEntry + Send + Sync> Component for ResourcesComp
             ResourcesMsg::ResourceSelected(selected) => {
                 self.resource.update_resource(Some(selected));
                 self.focus = Focus::Resource;
-                Ok(ComponentReturn::empty())
+                Ok(ComponentReturn::action(Action::ChangeSheet))
             }
             ResourcesMsg::TableEvent(table) => {
-                Self::forward_update::<_, ResourceTable<T>>(
-                    &mut self.table,
-                    table.into(),
-                    ResourcesMsg::TableEvent,
-                )
-                .await
+                Self::forward_update(&mut self.table, table.into(), ResourcesMsg::TableEvent).await
             }
             ResourcesMsg::ResourcesFetched(resources) => {
                 self.table.elements = resources;
@@ -121,7 +119,11 @@ impl<T: DrawableResource + TableEntry + Send + Sync> Component for ResourcesComp
             }
             ResourcesMsg::Back => {
                 self.focus = Focus::ResourceList;
-                Ok(ComponentReturn::empty())
+                Ok(ComponentReturn::action(Action::ChangeSheet))
+            }
+            ResourcesMsg::ResourceMsg(msg) => {
+                Self::forward_update(&mut self.resource, msg.into(), ResourcesMsg::ResourceMsg)
+                    .await
             }
         }
     }
@@ -139,7 +141,7 @@ impl<T: DrawableResource + TableEntry + Send + Sync> Component for ResourcesComp
                 ComponentEvent::Event(Event::Key(k)) if k.code == KeyCode::Esc => {
                     Ok(vec![ResourcesMsg::Back.into()])
                 }
-                _ => Ok(vec![]),
+                _ => Self::forward_event(&mut self.resource, evt, ResourcesMsg::ResourceMsg),
             },
         }
     }
@@ -161,6 +163,20 @@ pub struct Field {
 impl Field {
     pub fn new(name: String, value: FieldValue) -> Self {
         Self { name, value }
+    }
+
+    pub fn string(name: impl Into<String>, value: impl Into<String>) -> Self {
+        Self {
+            name: name.into(),
+            value: FieldValue::Str(value.into()),
+        }
+    }
+
+    pub fn json<T: Serialize + ?Sized>(name: impl Into<String>, value: &T) -> Self {
+        Self {
+            name: name.into(),
+            value: FieldValue::Json(serde_json::to_string_pretty(value).unwrap()),
+        }
     }
 }
 

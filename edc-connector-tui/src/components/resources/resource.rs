@@ -1,3 +1,8 @@
+use std::fmt::Debug;
+
+use arboard::Clipboard;
+use crossterm::event::{Event, KeyCode, KeyEvent};
+use msg::ResourceMsg;
 use ratatui::{
     layout::{Alignment, Constraint, Layout, Rect},
     style::{Color, Style},
@@ -6,14 +11,27 @@ use ratatui::{
     Frame,
 };
 
-use crate::components::StatelessComponent;
-
+pub mod msg;
 use super::{Component, DrawableResource, Field, FieldValue};
+use crate::{
+    components::{ComponentEvent, ComponentMsg, ComponentReturn, StatelessComponent},
+    types::info::InfoSheet,
+};
 
-#[derive(Debug)]
 pub struct ResourceComponent<T> {
     resource: Option<T>,
     name: String,
+    selected_field: usize,
+    clip : Clipboard
+}
+
+impl<T> Debug for ResourceComponent<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ResourceComponent")
+            .field("name", &self.name)
+            .field("selected_field", &self.selected_field)
+            .finish()
+    }
 }
 
 impl<T> Default for ResourceComponent<T> {
@@ -21,7 +39,15 @@ impl<T> Default for ResourceComponent<T> {
         Self {
             resource: Default::default(),
             name: String::default(),
+            selected_field: 0,
+            clip : Clipboard::new().unwrap()
         }
+    }
+}
+
+impl<T> ResourceComponent<T> {
+    pub fn info_sheet(&self) -> InfoSheet {
+        InfoSheet::default().key_binding("<y>", "Copy value")
     }
 }
 
@@ -30,6 +56,8 @@ impl<T: DrawableResource> ResourceComponent<T> {
         Self {
             name,
             resource: None,
+            selected_field: 0,
+            clip : Clipboard::new().unwrap()
         }
     }
 
@@ -50,11 +78,51 @@ impl<T: DrawableResource> ResourceComponent<T> {
             vec![]
         }
     }
+
+    fn handle_key(&self, key: KeyEvent) -> Vec<ComponentMsg<ResourceMsg>> {
+        match key.code {
+            KeyCode::Char('j') => vec![(ComponentMsg(ResourceMsg::MoveDown.into()))],
+            KeyCode::Char('k') => vec![(ComponentMsg(ResourceMsg::MoveUp.into()))],
+            KeyCode::Char('y') => vec![(ComponentMsg(ResourceMsg::Yank.into()))],
+            _ => vec![],
+        }
+    }
+
+    fn yank(&mut self) {
+        if let Some(res) = self.resource.as_ref() {
+            if let Some(field) = res.fields().get(self.selected_field) {
+
+                self.clip.set_text(field.value.as_ref().to_string()).unwrap();
+            }
+        }
+    }
+
+    fn move_up(&mut self) {
+        if let Some(res) = self.resource.as_ref() {
+            let pos = if self.selected_field == 0 {
+                res.fields().len() - 1
+            } else {
+                self.selected_field - 1
+            };
+            self.selected_field = pos;
+        }
+    }
+
+    fn move_down(&mut self) {
+        if let Some(res) = self.resource.as_ref() {
+            let pos = if self.selected_field == res.fields().len() - 1 {
+                0
+            } else {
+                self.selected_field + 1
+            };
+            self.selected_field = pos;
+        }
+    }
 }
 
 #[async_trait::async_trait]
 impl<T: DrawableResource + Send> Component for ResourceComponent<T> {
-    type Msg = ();
+    type Msg = ResourceMsg;
     type Props = ();
 
     fn view(&mut self, f: &mut Frame, rect: Rect) {
@@ -68,7 +136,6 @@ impl<T: DrawableResource + Send> Component for ResourceComponent<T> {
         );
         let block = Block::default()
             .title(Title::from(styled_text).alignment(Alignment::Center))
-            .border_type(BorderType::Rounded)
             .borders(Borders::ALL);
 
         let constraints = self.field_constraints();
@@ -79,27 +146,57 @@ impl<T: DrawableResource + Send> Component for ResourceComponent<T> {
             if let Some(res) = self.resource.as_ref() {
                 for (idx, elem) in res.fields().into_iter().enumerate() {
                     let mut field = FieldComponent;
-                    field.view(&elem, f, layout[idx]);
+                    field.view(&(elem, idx == self.selected_field), f, layout[idx]);
                 }
             }
         }
 
         f.render_widget(block, rect);
     }
+
+    async fn update(
+        &mut self,
+        message: ComponentMsg<Self::Msg>,
+    ) -> anyhow::Result<ComponentReturn<Self::Msg>> {
+        match message.to_owned() {
+            ResourceMsg::MoveUp => self.move_up(),
+            ResourceMsg::MoveDown => self.move_down(),
+            ResourceMsg::Yank => self.yank(),
+        };
+
+        Ok(ComponentReturn::empty())
+    }
+
+    fn handle_event(
+        &mut self,
+        evt: ComponentEvent,
+    ) -> anyhow::Result<Vec<ComponentMsg<Self::Msg>>> {
+        match evt {
+            ComponentEvent::Event(Event::Key(key)) => Ok(self.handle_key(key)),
+            _ => Ok(vec![]),
+        }
+    }
 }
 
 pub struct FieldComponent;
 
 impl StatelessComponent for FieldComponent {
-    type Props = Field;
+    type Props = (Field, bool);
 
-    fn view(&mut self, props: &Self::Props, f: &mut Frame, rect: Rect) {
-        let styled_text = Span::styled(
-            format!(" {} ", props.name),
-            Style::default().fg(Color::Yellow),
+    fn view(&mut self, (field, selected): &Self::Props, f: &mut Frame, rect: Rect) {
+        let style = if *selected {
+            Style::default().fg(Color::Yellow)
+        } else {
+            Style::default()
+        };
+        let styled_text = Span::styled(format!(" {} ", field.name), style);
+
+        let value = Paragraph::new(field.value.as_ref()).block(
+            Block::bordered()
+                .title(styled_text)
+                .border_style(style)
+                .border_type(BorderType::Double),
         );
-        let value =
-            Paragraph::new(props.value.as_ref()).block(Block::bordered().title(styled_text));
 
         f.render_widget(value, rect)
     }

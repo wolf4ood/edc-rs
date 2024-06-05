@@ -1,7 +1,7 @@
-use std::time::Duration;
 use app::App;
 use config::{default_file, Config};
 use runner::Runner;
+use std::time::Duration;
 
 mod app;
 mod components;

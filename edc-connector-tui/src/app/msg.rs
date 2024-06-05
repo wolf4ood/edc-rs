@@ -1,6 +1,7 @@
 use crate::{
     components::{
-        assets::AssetsMsg, connectors::msg::ConnectorsMsg, header::msg::HeaderMsg,
+        assets::AssetsMsg, connectors::msg::ConnectorsMsg,
+        contract_definitions::ContractDefinitionsMsg, header::msg::HeaderMsg,
         launch_bar::msg::LaunchBarMsg, policies::PoliciesMsg,
     },
     types::nav::Nav,
@@ -14,6 +15,8 @@ pub enum AppMsg {
     LaunchBarMsg(LaunchBarMsg),
     AssetsMsg(AssetsMsg),
     PoliciesMsg(PoliciesMsg),
+    ContractDefinitions(ContractDefinitionsMsg),
     HeaderMsg(HeaderMsg),
     RoutingMsg(Nav),
+    ChangeSheet,
 }

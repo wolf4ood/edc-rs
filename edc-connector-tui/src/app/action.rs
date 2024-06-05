@@ -11,6 +11,7 @@ impl ActionHandler for App {
         match (&self.focus, action) {
             (AppFocus::LaunchBar, Action::Esc) => Ok(vec![AppMsg::HideLaunchBar.into()]),
             (_, Action::NavTo(nav)) => Ok(vec![AppMsg::RoutingMsg(nav).into()]),
+            (_, Action::ChangeSheet) => Ok(vec![AppMsg::ChangeSheet.into()]),
             _ => Ok(vec![]),
         }
     }
