@@ -8,5 +8,4 @@ async fn should_fetch_dataplanes() {
 
     let response = client.data_planes().list().await.unwrap();
     assert!(response.len() > 0);
-
 }

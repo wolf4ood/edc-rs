@@ -1,9 +1,6 @@
 use crate::{
     client::EdcConnectorClientInternal,
-    types::{
-        context::WithContext,
-        dataplane::DataPlaneInstance,
-    },
+    types::{context::WithContext, dataplane::DataPlaneInstance},
     EdcResult,
 };
 
