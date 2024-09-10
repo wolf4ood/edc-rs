@@ -53,7 +53,7 @@ jobs:
 
       - name: Print version
         run: |-
-          echo "Releasing Connector version: ${needs.release-version.outputs.RELEASE_VERSION}"
+          echo "Releasing Connector version: ${{ needs.release-version.outputs.RELEASE_VERSION }}"
       - name: Package connector
         shell: bash
         working-directory: ./testing/connector
