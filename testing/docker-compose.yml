@@ -1,7 +1,6 @@
 services:
   consumer-connector:
-    build: connector
-    platform: ${DOCKER_PLATFORM:-linux/amd64}
+    image: ghcr.io/wolf4ood/connector:0.9.0
     ports:
       - "19191:9191" # connector default
       - "19192:9192" # connector control
@@ -19,8 +18,7 @@ services:
       - "host.docker.internal:host-gateway"
 
   provider-connector:
-    build: connector
-    platform: ${DOCKER_PLATFORM:-linux/amd64}
+    image: ghcr.io/wolf4ood/connector:0.9.0
     ports:
       - "29191:9191" # connector default
       - "29192:9192" # connector control
