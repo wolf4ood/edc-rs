@@ -78,7 +78,8 @@ jobs:
         id: push
         uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
         with:
-          context: testing/connector/src/main/docker
+          context: testing/connector
+          file: testing/connector/src/resources/docker/Dockerfile
           build-args: |
             JAR=testing/connector/build/libs/connector.jar
           push: true
