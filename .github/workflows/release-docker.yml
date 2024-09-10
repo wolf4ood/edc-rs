@@ -52,7 +52,7 @@ jobs:
           cache: "gradle"
 
       - name: Print version
-        rune: |-
+        run: |-
           echo "Releasing Connector version: ${needs.release-version.outputs.RELEASE_VERSION}"
       - name: Package connector
         shell: bash
