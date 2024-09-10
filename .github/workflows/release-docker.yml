@@ -29,6 +29,7 @@ jobs:
         shell: bash
         run: |-
           VERSION=`./gradlew properties  | awk '/^version:/ {print $2}'`
+          echo "Connector version: ${VERSION}"
           echo "RELEASE_VERSION=$VERSION" >> $GITHUB_OUTPUT
 
   build-and-push-image:
@@ -49,6 +50,10 @@ jobs:
           java-version: "17"
           distribution: "temurin"
           cache: "gradle"
+
+      - name: Print version
+        rune: |-
+          echo "Releasing Connector version: ${needs.release-version.outputs.RELEASE_VERSION}"
       - name: Package connector
         shell: bash
         working-directory: ./testing/connector
