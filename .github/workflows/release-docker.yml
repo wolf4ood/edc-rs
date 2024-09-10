@@ -25,6 +25,7 @@ jobs:
           distribution: "temurin"
           cache: "gradle"
       - name: Extract version
+        working-directory: ./testing/connector
         shell: bash
         run: |-
           VERSION=`./gradlew properties  | awk '/^version:/ {print $2}'`
@@ -50,6 +51,7 @@ jobs:
           cache: "gradle"
       - name: Package connector
         shell: bash
+        working-directory: ./testing/connector
         run: |-
           ./gradlew shadowJar
 
@@ -72,7 +74,7 @@ jobs:
         with:
           context: testing/connector/src/main/docker
           build-args: |
-            JAR=build/libs/connector.jar
+            JAR=testing/connector/build/libs/connector.jar
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
