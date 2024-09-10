@@ -4,6 +4,7 @@ format.version = "1.1"
 [versions]
 edc = "0.9.0"
 shadow = "8.1.1"
+docker = "9.4.0"
 
 [libraries]
 edc-runtime-metamodel = { module = "org.eclipse.edc:runtime-metamodel", version.ref = "edc" }
@@ -33,3 +34,4 @@ edc-data-plane-iam = { module = "org.eclipse.edc:data-plane-iam", version.ref = 
 
 [plugins]
 shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }
+docker = { id = "com.bmuschko.docker-remote-api", version.ref = "docker" }
