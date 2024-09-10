@@ -53,6 +53,7 @@ jobs:
 
       - name: Print version
         run: |-
+          echo '${{ toJSON(needs.release-version.outputs) }}'
           echo "Releasing Connector version: ${{ needs.release-version.outputs.RELEASE_VERSION }}"
       - name: Package connector
         shell: bash
