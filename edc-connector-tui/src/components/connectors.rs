@@ -24,11 +24,16 @@ pub struct ConnectorEntry(Connector);
 
 impl TableEntry for ConnectorEntry {
     fn row(&self) -> Row {
-        Row::new(vec![self.0.config().name(), self.0.config().address()])
+        Row::new(vec![
+            self.0.config().name(),
+            self.0.config().address(),
+            self.0.config().auth().kind(),
+            self.0.status().as_str(),
+        ])
     }
 
     fn headers() -> Row<'static> {
-        Row::new(vec!["NAME", "ADDRESS"])
+        Row::new(vec!["NAME", "ADDRESS", "AUTH", "STATUS"])
     }
 }
 

@@ -47,6 +47,28 @@ pub fn default_file() -> anyhow::Result<PathBuf> {
 pub struct ConnectorConfig {
     name: String,
     address: String,
+    #[serde(default)]
+    auth: AuthKind,
+}
+
+#[derive(Deserialize, Debug, Clone, Default)]
+#[serde(tag = "type")]
+#[serde(rename_all = "kebab-case")]
+pub enum AuthKind {
+    #[default]
+    NoAuth,
+    Token {
+        token_alias: String,
+    },
+}
+
+impl AuthKind {
+    pub fn kind(&self) -> &str {
+        match self {
+            AuthKind::NoAuth => "No auth",
+            AuthKind::Token { .. } => "Token based",
+        }
+    }
 }
 
 impl ConnectorConfig {
@@ -56,5 +78,9 @@ impl ConnectorConfig {
 
     pub fn address(&self) -> &str {
         &self.address
+    }
+
+    pub fn auth(&self) -> &AuthKind {
+        &self.auth
     }
 }

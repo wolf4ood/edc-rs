@@ -5,7 +5,8 @@ pub mod model;
 mod msg;
 
 use crossterm::event::{self, Event, KeyCode};
-use edc_connector_client::EdcConnectorClient;
+use edc_connector_client::{Auth, EdcConnectorClient};
+use keyring::Entry;
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     Frame,
@@ -18,9 +19,9 @@ use crate::{
         header::HeaderComponent, launch_bar::LaunchBar, policies::PolicyDefinitionsComponent,
         Component, ComponentEvent, ComponentMsg, ComponentReturn,
     },
-    config::Config,
+    config::{AuthKind, Config, ConnectorConfig},
     types::{
-        connector::Connector,
+        connector::{Connector, ConnectorStatus},
         info::InfoSheet,
         nav::{Menu, Nav},
     },
@@ -41,17 +42,42 @@ pub struct App {
 }
 
 impl App {
+    fn auth(cfg: &ConnectorConfig) -> (ConnectorStatus, Auth) {
+        match cfg.auth() {
+            AuthKind::NoAuth => (ConnectorStatus::Connected, Auth::NoAuth),
+            AuthKind::Token { token_alias } => {
+                let entry =
+                    Entry::new("edc-tui", &token_alias).and_then(|entry| entry.get_password());
+
+                match entry {
+                    Ok(pwd) => (ConnectorStatus::Connected, Auth::api_token(pwd)),
+                    Err(_err) => (
+                        ConnectorStatus::Custom(format!(
+                            "Token not found for alias {}",
+                            token_alias
+                        )),
+                        Auth::NoAuth,
+                    ),
+                }
+            }
+        }
+    }
+
+    fn init_connector(cfg: ConnectorConfig) -> Connector {
+        let (status, auth) = Self::auth(&cfg);
+        let client = EdcConnectorClient::builder()
+            .management_url(cfg.address())
+            .with_auth(auth)
+            .build()
+            .unwrap();
+        Connector::new(cfg, client, status)
+    }
+
     pub fn init(cfg: Config) -> App {
         let connectors = cfg
             .connectors
             .into_iter()
-            .map(|cfg| {
-                let client = EdcConnectorClient::builder()
-                    .management_url(cfg.address())
-                    .build()
-                    .unwrap();
-                Connector::new(cfg, client)
-            })
+            .map(App::init_connector)
             .collect();
         let connectors = ConnectorsComponent::new(connectors);
 
