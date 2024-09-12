@@ -31,6 +31,7 @@ edc-data-plane-self-registration = { module = "org.eclipse.edc:data-plane-self-r
 edc-data-plane-core = { module = "org.eclipse.edc:data-plane-core", version.ref = "edc" }
 edc-data-plane-http = { module = "org.eclipse.edc:data-plane-http", version.ref = "edc" }
 edc-data-plane-iam = { module = "org.eclipse.edc:data-plane-iam", version.ref = "edc" }
+edc-auth-tokenbased= { module = "org.eclipse.edc:auth-tokenbased", version.ref = "edc" }
 
 [plugins]
 shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }
