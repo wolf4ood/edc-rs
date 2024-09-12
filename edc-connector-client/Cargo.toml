@@ -6,7 +6,7 @@ license = "Apache-2.0"
 description= "A Rust client for EDC"
 repository = "https://github.com/wolf4ood/edc-rs"
 keywords = ["dataspace", "http"]
-categories = ["dataspace"]
+categories = []
 readme = "README.md"
 
 [dependencies]
