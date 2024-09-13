@@ -1,7 +1,7 @@
 version: 2
 updates:
 - package-ecosystem: cargo
-  directory: "/edc-connector-client"
+  directory: "/"
   schedule:
     interval: daily
     time: "04:00"
