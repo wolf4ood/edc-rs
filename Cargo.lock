@@ -474,7 +474,7 @@ dependencies = [
  "anyhow",
  "arboard",
  "async-trait",
- "crossterm 0.27.0",
+ "crossterm 0.28.1",
  "dirs-next",
  "edc-connector-client",
  "enum-ordinalize",
