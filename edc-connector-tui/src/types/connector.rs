@@ -21,7 +21,7 @@ impl ConnectorStatus {
     pub fn as_str(&self) -> &str {
         match self {
             ConnectorStatus::Connected => "connected",
-            ConnectorStatus::Custom(msg) => &msg,
+            ConnectorStatus::Custom(msg) => msg,
         }
     }
 }

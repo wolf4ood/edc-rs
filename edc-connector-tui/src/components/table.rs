@@ -132,7 +132,7 @@ impl<T: TableEntry, M> UiTable<T, M> {
                 if let Some(cb) = self.on_select.as_ref() {
                     if let Some(idx) = self.table_state.selected() {
                         if let Some(element) = self.elements.get(idx) {
-                            vec![ComponentMsg(TableMsg::Outer(cb(&element)))]
+                            vec![ComponentMsg(TableMsg::Outer(cb(element)))]
                         } else {
                             vec![]
                         }

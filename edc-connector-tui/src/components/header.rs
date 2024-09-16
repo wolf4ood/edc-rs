@@ -75,7 +75,7 @@ impl Component for HeaderComponent {
             HeaderMsg::NextTab => {
                 let current = self.menu.clone();
                 let idx = (self.menu.ordinal() + 1) % Menu::VALUES.len();
-                self.menu = Menu::from_ordinal(idx).unwrap_or_else(|| current);
+                self.menu = Menu::from_ordinal(idx).unwrap_or(current);
                 Ok(ComponentReturn::action(super::Action::NavTo(
                     self.menu.clone().into(),
                 )))
