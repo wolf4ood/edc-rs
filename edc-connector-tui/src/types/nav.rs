@@ -45,9 +45,9 @@ impl Menu {
     }
 }
 
-impl Into<Menu> for Nav {
-    fn into(self) -> Menu {
-        match self {
+impl From<Nav> for Menu {
+    fn from(val: Nav) -> Self {
+        match val {
             Nav::ConnectorsList => Menu::Connectors,
             Nav::AssetsList => Menu::Assets,
             Nav::PoliciesList => Menu::Policies,
@@ -56,9 +56,9 @@ impl Into<Menu> for Nav {
     }
 }
 
-impl Into<Nav> for Menu {
-    fn into(self) -> Nav {
-        match self {
+impl From<Menu> for Nav {
+    fn from(val: Menu) -> Self {
+        match val {
             Menu::Connectors => Nav::ConnectorsList,
             Menu::Assets => Nav::AssetsList,
             Menu::Policies => Nav::PoliciesList,

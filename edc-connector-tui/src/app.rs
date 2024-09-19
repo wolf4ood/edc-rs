@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{rc::Rc, time::Duration};
 mod action;
 mod fetch;
 pub mod model;
@@ -17,7 +17,8 @@ use crate::{
         assets::AssetsComponent, connectors::ConnectorsComponent,
         contract_definitions::ContractDefinitionsComponent, footer::Footer,
         header::HeaderComponent, launch_bar::LaunchBar, policies::PolicyDefinitionsComponent,
-        Component, ComponentEvent, ComponentMsg, ComponentReturn,
+        Action, Component, ComponentEvent, ComponentMsg, ComponentReturn, Notification,
+        NotificationMsg,
     },
     config::{AuthKind, Config, ConnectorConfig},
     types::{
@@ -28,6 +29,8 @@ use crate::{
 };
 
 use self::{model::AppFocus, msg::AppMsg};
+
+const SERVICE: &str = "edc-connector-tui";
 
 pub struct App {
     connectors: ConnectorsComponent,
@@ -46,8 +49,7 @@ impl App {
         match cfg.auth() {
             AuthKind::NoAuth => (ConnectorStatus::Connected, Auth::NoAuth),
             AuthKind::Token { token_alias } => {
-                let entry =
-                    Entry::new("edc-tui", &token_alias).and_then(|entry| entry.get_password());
+                let entry = Entry::new(SERVICE, token_alias).and_then(|entry| entry.get_password());
 
                 match entry {
                     Ok(pwd) => (ConnectorStatus::Connected, Auth::api_token(pwd)),
@@ -105,6 +107,25 @@ impl App {
             .key_binding("<:q>", "Quit")
     }
 
+    pub fn show_notification(
+        &mut self,
+        noty: Notification,
+    ) -> anyhow::Result<ComponentReturn<AppMsg>> {
+        let timeout = noty.timeout();
+        self.footer.show_notification(noty);
+
+        let action = Action::spawn(async move {
+            tokio::time::sleep(Duration::from_secs(timeout)).await;
+            Ok(Action::ClearNotification)
+        });
+        Ok(ComponentReturn::action(action))
+    }
+
+    pub fn clear_notification(&mut self) -> anyhow::Result<ComponentReturn<AppMsg>> {
+        self.footer.clear_notification();
+        Ok(ComponentReturn::empty())
+    }
+
     pub fn change_sheet(&mut self) -> anyhow::Result<ComponentReturn<AppMsg>> {
         let component_sheet = match self.header.selected_menu() {
             Menu::Connectors => InfoSheet::default(),
@@ -127,7 +148,6 @@ impl App {
         self.launch_bar.clear();
         self.header.set_selected_menu(nav);
         self.change_sheet()?;
-
         match self.header.selected_menu() {
             Menu::Connectors => {
                 self.focus = AppFocus::ConnectorList;
@@ -240,6 +260,8 @@ impl Component for App {
             }
             AppMsg::RoutingMsg(nav) => self.handle_routing(nav).await,
             AppMsg::ChangeSheet => self.change_sheet(),
+            AppMsg::NontificationMsg(NotificationMsg::Show(noty)) => self.show_notification(noty),
+            AppMsg::NontificationMsg(NotificationMsg::Clear) => self.clear_notification(),
         }
     }
 

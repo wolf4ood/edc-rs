@@ -1,9 +1,10 @@
-use std::{collections::VecDeque, time::Duration};
+use std::{collections::VecDeque, sync::Arc, time::Duration};
 
 use crossterm::event;
 use ratatui::{backend::Backend, Terminal};
+use tokio::sync::Mutex;
 
-use crate::components::{Action, ActionHandler, Component, ComponentEvent};
+use crate::components::{Action, ActionHandler, Component, ComponentEvent, ComponentMsg};
 
 pub struct Runner<C: Component> {
     tick_rate: Duration,
@@ -22,45 +23,81 @@ impl<C: Component + ActionHandler<Msg = <C as Component>::Msg> + Send> Runner<C>
         terminal.clear()?;
 
         let mut should_quit = false;
+        let action_queue = Arc::new(Mutex::new(VecDeque::<Action>::new()));
+        let async_msgs = Arc::new(Mutex::new(
+            VecDeque::<ComponentMsg<<C as Component>::Msg>>::new(),
+        ));
         loop {
             if should_quit {
                 break;
             }
-            terminal.draw(|frame| self.component.view(frame, frame.size()))?;
+            terminal.draw(|frame| self.component.view(frame, frame.area()))?;
+
+            let mut msgs = VecDeque::new();
+            let mut guard = async_msgs.lock().await;
+
+            while let Some(m) = guard.pop_front() {
+                msgs.push_front(m);
+            }
+            drop(guard);
 
             if event::poll(self.tick_rate)? {
                 let evt = event::read()?;
-                let mut msgs = self
+                let event_msgs = self
                     .component
                     .handle_event(ComponentEvent::Event(evt))?
                     .into_iter()
-                    .collect::<VecDeque<_>>();
+                    .collect::<Vec<_>>();
 
-                while let Some(msg) = msgs.pop_front() {
-                    let actions = {
-                        let ret = self.component.update(msg).await?;
+                for m in event_msgs {
+                    msgs.push_back(m);
+                }
+            };
 
-                        for m in ret.msgs {
+            while let Some(msg) = msgs.pop_front() {
+                let actions = {
+                    let ret = self.component.update(msg).await?;
+
+                    for m in ret.msgs {
+                        msgs.push_back(m);
+                    }
+
+                    for c in ret.cmds {
+                        for m in c.await.unwrap() {
                             msgs.push_back(m);
                         }
+                    }
 
-                        for c in ret.cmds {
-                            for m in c.await.unwrap() {
-                                msgs.push_back(m);
+                    ret.actions
+                };
+
+                for a in actions {
+                    if let Action::Spawn(handler) = a {
+                        let inner_action_queue = action_queue.clone();
+                        tokio::task::spawn(async move {
+                            if let Ok(action) = handler.await {
+                                inner_action_queue.lock().await.push_back(action)
                             }
-                        }
-
-                        ret.actions
-                    };
-
-                    for a in actions {
+                        });
+                    } else {
                         should_quit = should_quit || matches!(a, Action::Quit);
                         for m in self.component.handle_action(a)? {
                             msgs.push_back(m)
                         }
                     }
                 }
-            };
+            }
+            let mut guard = action_queue.lock().await;
+            let mut msg_guard = async_msgs.lock().await;
+            while let Some(a) = guard.pop_front() {
+                if let Action::Spawn(_) = a {
+                } else {
+                    should_quit = should_quit || matches!(a, Action::Quit);
+                    for m in self.component.handle_action(a)? {
+                        msg_guard.push_back(m)
+                    }
+                }
+            }
         }
 
         Ok(())

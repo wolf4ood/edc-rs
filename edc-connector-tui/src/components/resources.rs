@@ -3,7 +3,7 @@ use std::{fmt::Debug, sync::Arc};
 use self::{msg::ResourcesMsg, resource::ResourceComponent};
 use super::{
     table::{msg::TableMsg, TableEntry, UiTable},
-    Action, Component, ComponentEvent, ComponentMsg, ComponentReturn,
+    Action, Component, ComponentEvent, ComponentMsg, ComponentReturn, Notification,
 };
 use crate::types::{connector::Connector, info::InfoSheet};
 use crossterm::event::{Event, KeyCode};
@@ -84,8 +84,12 @@ impl<T: DrawableResource + TableEntry + Send + Sync> Component for ResourcesComp
         if let Some(on_fetch) = self.on_fetch.as_ref() {
             Ok(ComponentReturn::cmd(
                 async move {
-                    let elements = on_fetch(&connector).await?;
-                    Ok(vec![ResourcesMsg::ResourcesFetched(elements).into()])
+                    match on_fetch(&connector).await {
+                        Ok(elements) => Ok(vec![ResourcesMsg::ResourcesFetched(elements).into()]),
+                        Err(err) => Ok(vec![
+                            ResourcesMsg::ResourcesFetchFailed(err.to_string()).into()
+                        ]),
+                    }
                 }
                 .boxed(),
             ))
@@ -126,6 +130,9 @@ impl<T: DrawableResource + TableEntry + Send + Sync> Component for ResourcesComp
                 Self::forward_update(&mut self.resource, msg.into(), ResourcesMsg::ResourceMsg)
                     .await
             }
+            ResourcesMsg::ResourcesFetchFailed(error) => Ok(ComponentReturn::action(
+                Action::Notification(Notification::error(error)),
+            )),
         }
     }
 

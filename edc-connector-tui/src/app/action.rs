@@ -12,6 +12,14 @@ impl ActionHandler for App {
             (AppFocus::LaunchBar, Action::Esc) => Ok(vec![AppMsg::HideLaunchBar.into()]),
             (_, Action::NavTo(nav)) => Ok(vec![AppMsg::RoutingMsg(nav).into()]),
             (_, Action::ChangeSheet) => Ok(vec![AppMsg::ChangeSheet.into()]),
+            (_, Action::Notification(noty)) => Ok(vec![AppMsg::NontificationMsg(
+                crate::components::NotificationMsg::Show(noty),
+            )
+            .into()]),
+            (_, Action::ClearNotification) => Ok(vec![AppMsg::NontificationMsg(
+                crate::components::NotificationMsg::Clear,
+            )
+            .into()]),
             _ => Ok(vec![]),
         }
     }

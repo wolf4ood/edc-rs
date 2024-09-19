@@ -9,4 +9,5 @@ pub enum ResourcesMsg<T> {
     TableEvent(TableMsg<Box<ResourcesMsg<T>>>),
     ResourceMsg(ResourceMsg),
     ResourcesFetched(Vec<T>),
+    ResourcesFetchFailed(String),
 }

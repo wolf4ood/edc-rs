@@ -81,9 +81,9 @@ impl<T: DrawableResource> ResourceComponent<T> {
 
     fn handle_key(&self, key: KeyEvent) -> Vec<ComponentMsg<ResourceMsg>> {
         match key.code {
-            KeyCode::Char('j') => vec![(ComponentMsg(ResourceMsg::MoveDown.into()))],
-            KeyCode::Char('k') => vec![(ComponentMsg(ResourceMsg::MoveUp.into()))],
-            KeyCode::Char('y') => vec![(ComponentMsg(ResourceMsg::Yank.into()))],
+            KeyCode::Char('j') => vec![(ComponentMsg(ResourceMsg::MoveDown))],
+            KeyCode::Char('k') => vec![(ComponentMsg(ResourceMsg::MoveUp))],
+            KeyCode::Char('y') => vec![(ComponentMsg(ResourceMsg::Yank))],
             _ => vec![],
         }
     }

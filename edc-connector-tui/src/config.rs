@@ -33,7 +33,7 @@ impl Config {
 
         let config: Result<Config, toml::de::Error> = toml::from_str(&contents);
         match config {
-            Ok(config) => return Ok(config),
+            Ok(config) => Ok(config),
             Err(e) => panic!("fail to parse config file: {}", e),
         }
     }
