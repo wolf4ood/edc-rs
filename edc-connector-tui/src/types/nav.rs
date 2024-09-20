@@ -11,6 +11,7 @@ pub enum Nav {
     AssetsList,
     PoliciesList,
     ContractDefinitionsList,
+    ContractNegotiations,
 }
 
 impl FromStr for Nav {
@@ -34,6 +35,7 @@ pub enum Menu {
     Assets,
     Policies,
     ContractDefinitions,
+    ContractNegotiations,
 }
 
 impl Menu {
@@ -52,6 +54,7 @@ impl From<Nav> for Menu {
             Nav::AssetsList => Menu::Assets,
             Nav::PoliciesList => Menu::Policies,
             Nav::ContractDefinitionsList => Menu::ContractDefinitions,
+            Nav::ContractNegotiations => Menu::ContractNegotiations,
         }
     }
 }
@@ -63,6 +66,7 @@ impl From<Menu> for Nav {
             Menu::Assets => Nav::AssetsList,
             Menu::Policies => Nav::PoliciesList,
             Menu::ContractDefinitions => Nav::ContractDefinitionsList,
+            Menu::ContractNegotiations => Nav::ContractNegotiations,
         }
     }
 }

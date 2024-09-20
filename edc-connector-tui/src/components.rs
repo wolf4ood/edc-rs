@@ -9,6 +9,7 @@ use crate::types::nav::Nav;
 pub mod assets;
 pub mod connectors;
 pub mod contract_definitions;
+pub mod contract_negotiations;
 pub mod footer;
 pub mod header;
 pub mod launch_bar;
@@ -159,6 +160,7 @@ impl Notification {
         }
     }
 
+    #[allow(dead_code)]
     pub fn info(msg: String) -> Notification {
         Notification {
             msg,

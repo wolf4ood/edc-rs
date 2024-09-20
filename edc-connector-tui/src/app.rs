@@ -15,7 +15,8 @@ use ratatui::{
 use crate::{
     components::{
         assets::AssetsComponent, connectors::ConnectorsComponent,
-        contract_definitions::ContractDefinitionsComponent, footer::Footer,
+        contract_definitions::ContractDefinitionsComponent,
+        contract_negotiations::ContractNegotiationsComponent, footer::Footer,
         header::HeaderComponent, launch_bar::LaunchBar, policies::PolicyDefinitionsComponent,
         Action, Component, ComponentEvent, ComponentMsg, ComponentReturn, Notification,
         NotificationMsg,
@@ -37,6 +38,7 @@ pub struct App {
     policies: PolicyDefinitionsComponent,
     assets: AssetsComponent,
     contract_definitions: ContractDefinitionsComponent,
+    contract_negotiations: ContractNegotiationsComponent,
     launch_bar: LaunchBar,
     launch_bar_visible: bool,
     focus: AppFocus,
@@ -91,6 +93,8 @@ impl App {
             assets: AssetsComponent::default().on_fetch(Self::fetch_assets),
             contract_definitions: ContractDefinitionsComponent::default()
                 .on_fetch(Self::fetch_contract_definitions),
+            contract_negotiations: ContractNegotiationsComponent::default()
+                .on_fetch(Self::fetch_contract_negotiations),
             launch_bar: LaunchBar::default(),
             launch_bar_visible: false,
             focus: AppFocus::ConnectorList,
@@ -132,6 +136,7 @@ impl App {
             Menu::Assets => self.assets.info_sheet(),
             Menu::Policies => self.policies.info_sheet(),
             Menu::ContractDefinitions => self.contract_definitions.info_sheet(),
+            Menu::ContractNegotiations => self.contract_negotiations.info_sheet(),
         };
 
         self.header.update_sheet(
@@ -189,6 +194,18 @@ impl App {
                 }
                 Ok(ComponentReturn::empty())
             }
+            Menu::ContractNegotiations => {
+                self.focus = AppFocus::ContractNegotiations;
+                if let Some(connector) = self.connectors.selected() {
+                    return Self::forward_init(
+                        &mut self.contract_negotiations,
+                        connector.clone(),
+                        AppMsg::ContractNegotiations,
+                    )
+                    .await;
+                }
+                Ok(ComponentReturn::empty())
+            }
         }
     }
 }
@@ -209,6 +226,7 @@ impl Component for App {
             Menu::Assets => self.assets.view(f, main[2]),
             Menu::Policies => self.policies.view(f, main[2]),
             Menu::ContractDefinitions => self.contract_definitions.view(f, main[2]),
+            Menu::ContractNegotiations => self.contract_negotiations.view(f, main[2]),
         }
 
         self.footer.view(f, main[3]);
@@ -255,6 +273,14 @@ impl Component for App {
                 )
                 .await
             }
+            AppMsg::ContractNegotiations(m) => {
+                Self::forward_update(
+                    &mut self.contract_negotiations,
+                    m.into(),
+                    AppMsg::ContractNegotiations,
+                )
+                .await
+            }
             AppMsg::HeaderMsg(m) => {
                 Self::forward_update(&mut self.header, m.into(), AppMsg::HeaderMsg).await
             }
@@ -286,6 +312,11 @@ impl Component for App {
                 &mut self.contract_definitions,
                 evt.clone(),
                 AppMsg::ContractDefinitions,
+            )?,
+            AppFocus::ContractNegotiations => Self::forward_event(
+                &mut self.contract_negotiations,
+                evt.clone(),
+                AppMsg::ContractNegotiations,
             )?,
         };
 
