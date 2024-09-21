@@ -31,6 +31,10 @@ jobs:
           profile: minimal
           override: true
           components: rustfmt
+      - name: ⚙️ Install deps
+        run: |
+          sudo apt-get update
+          sudo apt install libdbus-1-dev pkg-config
 
       - name: Run cargo fmt
         uses: actions-rs/cargo@v1
