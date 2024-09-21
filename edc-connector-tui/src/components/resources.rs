@@ -109,7 +109,7 @@ impl<T: DrawableResource + TableEntry + Send + Sync> Component for ResourcesComp
         &mut self,
         msg: ComponentMsg<Self::Msg>,
     ) -> anyhow::Result<ComponentReturn<Self::Msg>> {
-        match msg.to_owned() {
+        match msg.take() {
             ResourcesMsg::ResourceSelected(selected) => {
                 self.resource.update_resource(Some(selected));
                 self.focus = Focus::Resource;

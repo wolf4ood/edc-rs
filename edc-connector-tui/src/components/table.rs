@@ -16,11 +16,13 @@ use self::msg::{TableLocalMsg, TableMsg};
 
 use super::{Component, ComponentEvent, ComponentMsg, ComponentReturn};
 
+pub type OnSelect<T, M> = Box<dyn Fn(&T) -> M + Send + Sync>;
+
 pub struct UiTable<T: TableEntry, M> {
     name: String,
     pub elements: Vec<T>,
     table_state: TableState,
-    on_select: Option<Box<dyn Fn(&T) -> M + Send + Sync>>,
+    on_select: Option<OnSelect<T, M>>,
 }
 
 impl<T: TableEntry + Debug, M> Debug for UiTable<T, M> {
@@ -79,7 +81,7 @@ impl<T: TableEntry + Send, M: Send> Component for UiTable<T, M> {
         &mut self,
         msg: ComponentMsg<Self::Msg>,
     ) -> anyhow::Result<ComponentReturn<Self::Msg>> {
-        match msg.to_owned() {
+        match msg.take() {
             TableMsg::Local(TableLocalMsg::MoveDown) => self.move_down(),
             TableMsg::Local(TableLocalMsg::MoveUp) => self.move_up(),
             TableMsg::Outer(_) => {}
@@ -151,7 +153,7 @@ impl<T: TableEntry, M> UiTable<T, M> {
 
     fn move_up(&mut self) {
         let new_pos = match self.table_state.selected() {
-            Some(i) if i == 0 => self.elements.len() - 1,
+            Some(0) => self.elements.len() - 1,
             Some(i) => i - 1,
             None => 0,
         };

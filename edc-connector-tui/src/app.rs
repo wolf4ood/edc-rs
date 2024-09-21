@@ -253,7 +253,7 @@ impl Component for App {
         &mut self,
         msg: ComponentMsg<Self::Msg>,
     ) -> anyhow::Result<ComponentReturn<AppMsg>> {
-        match msg.to_owned() {
+        match msg.take() {
             AppMsg::ConnectorsMsg(m) => {
                 Self::forward_update::<_, ConnectorsComponent>(
                     &mut self.connectors,

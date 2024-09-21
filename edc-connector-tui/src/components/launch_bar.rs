@@ -41,7 +41,7 @@ impl Component for LaunchBar {
         &mut self,
         msg: ComponentMsg<Self::Msg>,
     ) -> anyhow::Result<ComponentReturn<Self::Msg>> {
-        match msg.to_owned() {
+        match msg.take() {
             LaunchBarMsg::AppendCommand(input) => {
                 self.area.input(input);
                 Ok(ComponentReturn::empty())

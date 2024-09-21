@@ -190,7 +190,8 @@ pub enum NotificationKind {
 }
 
 impl<T> ComponentMsg<T> {
-    pub fn to_owned(self) -> T {
+
+    pub fn take(self) -> T {
         self.0
     }
 

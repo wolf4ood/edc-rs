@@ -18,7 +18,6 @@ jobs:
         os: [ubuntu-latest]
         rust: [stable]
     steps:
-
       - uses: actions/checkout@v2
       - name: Starting EDC Servers
         run: |
@@ -38,8 +37,15 @@ jobs:
         with:
           command: fmt
           args: --all -- --check
+
+      - name: Run cargo clippy
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: --all -- -D warnings
+
       - name: Run cargo test with tokio
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --manifest-path edc-connector-client/Cargo.toml  
+          args: --manifest-path edc-connector-client/Cargo.toml

@@ -50,7 +50,7 @@ impl Component for ConnectorsComponent {
         &mut self,
         msg: ComponentMsg<Self::Msg>,
     ) -> anyhow::Result<ComponentReturn<Self::Msg>> {
-        match msg.to_owned() {
+        match msg.take() {
             ConnectorsMsg::ConnectorSelected(connector) => {
                 self.selected = Some(connector.clone());
                 Ok(ComponentReturn::action(Action::NavTo(Nav::AssetsList)))

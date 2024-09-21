@@ -159,7 +159,7 @@ impl<T: DrawableResource + Send> Component for ResourceComponent<T> {
         &mut self,
         message: ComponentMsg<Self::Msg>,
     ) -> anyhow::Result<ComponentReturn<Self::Msg>> {
-        match message.to_owned() {
+        match message.take() {
             ResourceMsg::MoveUp => self.move_up(),
             ResourceMsg::MoveDown => self.move_down(),
             ResourceMsg::Yank => self.yank(),

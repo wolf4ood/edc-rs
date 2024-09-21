@@ -71,7 +71,7 @@ impl Component for HeaderComponent {
         &mut self,
         msg: ComponentMsg<Self::Msg>,
     ) -> anyhow::Result<ComponentReturn<Self::Msg>> {
-        match msg.to_owned() {
+        match msg.take() {
             HeaderMsg::NextTab => {
                 let current = self.menu.clone();
                 let idx = (self.menu.ordinal() + 1) % Menu::VALUES.len();
