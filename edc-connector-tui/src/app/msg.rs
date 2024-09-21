@@ -3,7 +3,8 @@ use crate::{
         assets::AssetsMsg, connectors::msg::ConnectorsMsg,
         contract_definitions::ContractDefinitionsMsg,
         contract_negotiations::ContractNegotiationMsg, header::msg::HeaderMsg,
-        launch_bar::msg::LaunchBarMsg, policies::PoliciesMsg, NotificationMsg,
+        launch_bar::msg::LaunchBarMsg, policies::PoliciesMsg,
+        transfer_processes::TransferProcessMsg, NotificationMsg,
     },
     types::nav::Nav,
 };
@@ -18,6 +19,7 @@ pub enum AppMsg {
     PoliciesMsg(PoliciesMsg),
     ContractDefinitions(ContractDefinitionsMsg),
     ContractNegotiations(ContractNegotiationMsg),
+    TransferProcesses(TransferProcessMsg),
     HeaderMsg(HeaderMsg),
     RoutingMsg(Nav),
     NontificationMsg(NotificationMsg),

@@ -16,6 +16,7 @@ pub mod launch_bar;
 pub mod policies;
 pub mod resources;
 pub mod table;
+pub mod transfer_processes;
 
 pub trait StatelessComponent {
     type Props: Send;
