@@ -80,7 +80,7 @@ impl ContractRequestBuilder {
 }
 
 #[serde_as]
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ContractNegotiation {
     #[serde(rename = "@id")]
@@ -162,6 +162,10 @@ impl ContractNegotiation {
         T: FromValue,
     {
         self.private_properties.get(property)
+    }
+
+    pub fn private_properties(&self) -> &Properties {
+        &self.private_properties
     }
 
     pub fn contract_agreement_id(&self) -> Option<&String> {

@@ -3,7 +3,7 @@ use super::{Action, Component, ComponentEvent, ComponentMsg, ComponentReturn};
 use ratatui::{
     layout::Rect,
     style::Style,
-    widgets::{Block, Borders},
+    widgets::{Block, Borders, Widget},
     Frame,
 };
 use tui_textarea::{Input, Key, TextArea};
@@ -33,7 +33,8 @@ impl Component for LaunchBar {
         text_area.set_block(Block::default().borders(Borders::all()));
         text_area.set_cursor_line_style(Style::default());
         text_area.set_placeholder_text("Enter command");
-        f.render_widget(self.area.widget(), rect)
+
+        self.area.render(rect, f.buffer_mut());
     }
 
     async fn update(

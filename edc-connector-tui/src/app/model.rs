@@ -6,4 +6,5 @@ pub enum AppFocus {
     Assets,
     Policies,
     ContractDefinitions,
+    ContractNegotiations,
 }
