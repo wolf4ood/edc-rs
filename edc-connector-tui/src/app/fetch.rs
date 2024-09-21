@@ -4,6 +4,7 @@ use crate::{
     components::{
         assets::AssetEntry, contract_definitions::ContractDefinitionEntry,
         contract_negotiations::ContractNegotiationEntry, policies::PolicyDefinitionEntry,
+        transfer_processes::TransferProcessEntry,
     },
     types::connector::Connector,
 };
@@ -47,6 +48,20 @@ impl App {
             .map(ContractNegotiationEntry::new)
             .collect())
     }
+
+    pub async fn fetch_transfer_processes(
+        connector: Connector,
+    ) -> anyhow::Result<Vec<TransferProcessEntry>> {
+        Ok(connector
+            .client()
+            .transfer_processes()
+            .query(Query::default())
+            .await?
+            .into_iter()
+            .map(TransferProcessEntry::new)
+            .collect())
+    }
+
     pub async fn fetch_policies(
         connector: Connector,
     ) -> anyhow::Result<Vec<PolicyDefinitionEntry>> {

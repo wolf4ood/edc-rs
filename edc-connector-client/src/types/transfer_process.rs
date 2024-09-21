@@ -87,7 +87,7 @@ impl TransferRequestBuilder {
 }
 
 #[serde_as]
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct TransferProcess {
     #[serde(rename = "@id")]
@@ -121,6 +121,10 @@ impl TransferProcess {
         T: FromValue,
     {
         self.private_properties.get(property)
+    }
+
+    pub fn private_properties(&self) -> &Properties {
+        &self.private_properties
     }
 
     pub fn kind(&self) -> &TransferProcessKind {

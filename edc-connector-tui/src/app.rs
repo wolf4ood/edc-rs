@@ -18,8 +18,8 @@ use crate::{
         contract_definitions::ContractDefinitionsComponent,
         contract_negotiations::ContractNegotiationsComponent, footer::Footer,
         header::HeaderComponent, launch_bar::LaunchBar, policies::PolicyDefinitionsComponent,
-        Action, Component, ComponentEvent, ComponentMsg, ComponentReturn, Notification,
-        NotificationMsg,
+        transfer_processes::TransferProcessesComponent, Action, Component, ComponentEvent,
+        ComponentMsg, ComponentReturn, Notification, NotificationMsg,
     },
     config::{AuthKind, Config, ConnectorConfig},
     types::{
@@ -39,6 +39,7 @@ pub struct App {
     assets: AssetsComponent,
     contract_definitions: ContractDefinitionsComponent,
     contract_negotiations: ContractNegotiationsComponent,
+    transfer_processes: TransferProcessesComponent,
     launch_bar: LaunchBar,
     launch_bar_visible: bool,
     focus: AppFocus,
@@ -95,6 +96,8 @@ impl App {
                 .on_fetch(Self::fetch_contract_definitions),
             contract_negotiations: ContractNegotiationsComponent::default()
                 .on_fetch(Self::fetch_contract_negotiations),
+            transfer_processes: TransferProcessesComponent::default()
+                .on_fetch(Self::fetch_transfer_processes),
             launch_bar: LaunchBar::default(),
             launch_bar_visible: false,
             focus: AppFocus::ConnectorList,
@@ -137,6 +140,7 @@ impl App {
             Menu::Policies => self.policies.info_sheet(),
             Menu::ContractDefinitions => self.contract_definitions.info_sheet(),
             Menu::ContractNegotiations => self.contract_negotiations.info_sheet(),
+            Menu::TransferProcesses => self.transfer_processes.info_sheet(),
         };
 
         self.header.update_sheet(
@@ -206,6 +210,18 @@ impl App {
                 }
                 Ok(ComponentReturn::empty())
             }
+            Menu::TransferProcesses => {
+                self.focus = AppFocus::TransferProcesses;
+                if let Some(connector) = self.connectors.selected() {
+                    return Self::forward_init(
+                        &mut self.transfer_processes,
+                        connector.clone(),
+                        AppMsg::TransferProcesses,
+                    )
+                    .await;
+                }
+                Ok(ComponentReturn::empty())
+            }
         }
     }
 }
@@ -227,6 +243,7 @@ impl Component for App {
             Menu::Policies => self.policies.view(f, main[2]),
             Menu::ContractDefinitions => self.contract_definitions.view(f, main[2]),
             Menu::ContractNegotiations => self.contract_negotiations.view(f, main[2]),
+            Menu::TransferProcesses => self.transfer_processes.view(f, main[2]),
         }
 
         self.footer.view(f, main[3]);
@@ -281,6 +298,14 @@ impl Component for App {
                 )
                 .await
             }
+            AppMsg::TransferProcesses(m) => {
+                Self::forward_update(
+                    &mut self.transfer_processes,
+                    m.into(),
+                    AppMsg::TransferProcesses,
+                )
+                .await
+            }
             AppMsg::HeaderMsg(m) => {
                 Self::forward_update(&mut self.header, m.into(), AppMsg::HeaderMsg).await
             }
@@ -317,6 +342,11 @@ impl Component for App {
                 &mut self.contract_negotiations,
                 evt.clone(),
                 AppMsg::ContractNegotiations,
+            )?,
+            AppFocus::TransferProcesses => Self::forward_event(
+                &mut self.transfer_processes,
+                evt.clone(),
+                AppMsg::TransferProcesses,
             )?,
         };
 
