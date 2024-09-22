@@ -83,6 +83,7 @@ impl ConnectorsComponent {
             table: ConnectorsTable::with_elements(
                 "Connectors".to_string(),
                 connectors.into_iter().map(ConnectorEntry).collect(),
+                true,
             )
             .on_select(|connector| Box::new(ConnectorsMsg::ConnectorSelected(connector.0.clone()))),
             selected: None,
