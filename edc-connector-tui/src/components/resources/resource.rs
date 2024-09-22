@@ -1,4 +1,4 @@
-use std::fmt::{Debug};
+use std::fmt::Debug;
 
 use arboard::Clipboard;
 use crossterm::event::{Event, KeyCode, KeyEvent};
@@ -14,7 +14,9 @@ use ratatui::{
 pub mod msg;
 use super::{Component, DrawableResource, Field, FieldValue};
 use crate::{
-    components::{Action, ComponentEvent, ComponentMsg, ComponentReturn, Notification, StatelessComponent},
+    components::{
+        Action, ComponentEvent, ComponentMsg, ComponentReturn, Notification, StatelessComponent,
+    },
     types::info::InfoSheet,
 };
 
@@ -95,8 +97,8 @@ impl<T: DrawableResource> ResourceComponent<T> {
                     .set_text(field.value.as_ref().to_string())
                     .unwrap();
 
-
-                let notification = Notification::info(format!("Value of '{}' field copied!", field.name));
+                let notification =
+                    Notification::info(format!("Value of '{}' field copied!", field.name));
                 return Ok(ComponentReturn::action(Action::Notification(notification)));
             }
         }
