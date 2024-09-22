@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::fmt::{Debug};
 
 use arboard::Clipboard;
 use crossterm::event::{Event, KeyCode, KeyEvent};
@@ -14,7 +14,7 @@ use ratatui::{
 pub mod msg;
 use super::{Component, DrawableResource, Field, FieldValue};
 use crate::{
-    components::{ComponentEvent, ComponentMsg, ComponentReturn, StatelessComponent},
+    components::{Action, ComponentEvent, ComponentMsg, ComponentReturn, Notification, StatelessComponent},
     types::info::InfoSheet,
 };
 
@@ -88,14 +88,19 @@ impl<T: DrawableResource> ResourceComponent<T> {
         }
     }
 
-    fn yank(&mut self) {
+    fn yank(&mut self) -> anyhow::Result<ComponentReturn<ResourceMsg>> {
         if let Some(res) = self.resource.as_ref() {
             if let Some(field) = res.fields().get(self.selected_field) {
                 self.clip
                     .set_text(field.value.as_ref().to_string())
                     .unwrap();
+
+
+                let notification = Notification::info(format!("Value of '{}' field copied!", field.name));
+                return Ok(ComponentReturn::action(Action::Notification(notification)));
             }
         }
+        Ok(ComponentReturn::empty())
     }
 
     fn move_up(&mut self) {
@@ -162,7 +167,7 @@ impl<T: DrawableResource + Send> Component for ResourceComponent<T> {
         match message.take() {
             ResourceMsg::MoveUp => self.move_up(),
             ResourceMsg::MoveDown => self.move_down(),
-            ResourceMsg::Yank => self.yank(),
+            ResourceMsg::Yank => return self.yank(),
         };
 
         Ok(ComponentReturn::empty())

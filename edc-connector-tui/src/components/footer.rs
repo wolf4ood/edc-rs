@@ -13,6 +13,7 @@ pub mod msg;
 #[derive(Default)]
 pub struct Footer {
     noty: Option<Notification>,
+    noty_counter: u32,
 }
 
 #[async_trait::async_trait]
@@ -42,9 +43,14 @@ impl Component for Footer {
 impl Footer {
     pub fn show_notification(&mut self, noty: Notification) {
         self.noty = Some(noty);
+        self.noty_counter += 1;
     }
     pub fn clear_notification(&mut self) {
-        self.noty = None;
+        self.noty_counter -= 1;
+
+        if self.noty_counter == 0 {
+            self.noty = None;
+        }
     }
 
     fn map_color(noty: &Notification) -> Style {
