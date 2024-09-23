@@ -1,8 +1,9 @@
 [workspace]
 publish = false
 release = false
-changelog_update = false
 git_release_enable = false
+changelog_config = "cliff.toml"
+changelog_update = true
 
 [[package]]
 name = "edc-connector-client"
