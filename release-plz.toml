@@ -2,6 +2,7 @@
 publish = false
 release = false
 changelog_update = false
+git_release_enable = false
 
 [[package]]
 name = "edc-connector-client"
