@@ -79,6 +79,7 @@ impl Component for ConnectorsComponent {
 
 impl ConnectorsComponent {
     pub fn new(connectors: Vec<Connector>) -> Self {
+        let selected = connectors.first().cloned();
         Self {
             table: ConnectorsTable::with_elements(
                 "Connectors".to_string(),
@@ -86,7 +87,7 @@ impl ConnectorsComponent {
                 true,
             )
             .on_select(|connector| Box::new(ConnectorsMsg::ConnectorSelected(connector.0.clone()))),
-            selected: None,
+            selected,
         }
     }
 

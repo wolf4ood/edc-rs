@@ -14,7 +14,7 @@ pub fn get_app_config_path() -> anyhow::Result<std::path::PathBuf> {
     }
     .ok_or_else(|| anyhow::anyhow!("failed to find os config dir."))?;
 
-    path.push("edc-tui");
+    path.push("edc-connector-tui");
     std::fs::create_dir_all(&path)?;
     Ok(path)
 }
@@ -72,6 +72,14 @@ impl AuthKind {
 }
 
 impl ConnectorConfig {
+    pub fn new(name: String, address: String, auth: AuthKind) -> Self {
+        Self {
+            name,
+            address,
+            auth,
+        }
+    }
+
     pub fn name(&self) -> &str {
         &self.name
     }

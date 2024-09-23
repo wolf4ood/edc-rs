@@ -78,12 +78,7 @@ impl App {
         Connector::new(cfg, client, status)
     }
 
-    pub fn init(cfg: Config) -> App {
-        let connectors = cfg
-            .connectors
-            .into_iter()
-            .map(App::init_connector)
-            .collect();
+    pub fn init_with_connectors(connectors: Vec<Connector>) -> App {
         let connectors = ConnectorsComponent::new(connectors);
 
         let sheet = connectors.info_sheet().merge(Self::info_sheet());
@@ -104,6 +99,16 @@ impl App {
             footer: Footer::default(),
             header: HeaderComponent::with_sheet(sheet),
         }
+    }
+
+    pub fn init(cfg: Config) -> App {
+        let connectors = cfg
+            .connectors
+            .into_iter()
+            .map(App::init_connector)
+            .collect();
+
+        Self::init_with_connectors(connectors)
     }
 
     pub fn info_sheet() -> InfoSheet {
