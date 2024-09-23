@@ -4,6 +4,7 @@ release = false
 git_release_enable = false
 changelog_config = "cliff.toml"
 changelog_update = true
+git_tag_enable = true
 
 [[package]]
 name = "edc-connector-client"
