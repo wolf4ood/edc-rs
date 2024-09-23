@@ -1,4 +1,0 @@
-[dist.dependencies.apt]
-pkg-config = '*'
-libdbus-1-dev ='*'
-
