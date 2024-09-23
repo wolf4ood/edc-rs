@@ -19,24 +19,7 @@ async fn main() -> anyhow::Result<()> {
 
     let app = match cli.mode {
         Some(Commands::Connector { url, name, token }) => {
-            let auth = token.map(Auth::api_token).unwrap_or_else(|| Auth::NoAuth);
-            let client = EdcConnectorClient::builder()
-                .management_url(url.clone())
-                .with_auth(auth)
-                .build()
-                .unwrap();
-
-            let cfg = ConnectorConfig::new(
-                name.unwrap_or_else(|| url.clone()),
-                url,
-                config::AuthKind::Token {
-                    token_alias: "unknown".to_string(),
-                },
-            );
-
-            let connector = Connector::new(cfg, client, ConnectorStatus::Connected);
-
-            App::init_with_connectors(vec![connector])
+            init_app_single_connector(url, name, token).await
         }
         None => {
             let config = Config::parse(&cli.config.map(Ok).unwrap_or_else(default_file)?)?;
@@ -47,6 +30,31 @@ async fn main() -> anyhow::Result<()> {
     runner.run(terminal).await?;
     tui::restore_terminal()?;
     Ok(())
+}
+
+async fn init_app_single_connector(
+    url: String,
+    name: Option<String>,
+    token: Option<String>,
+) -> App {
+    let auth = token.map(Auth::api_token).unwrap_or_else(|| Auth::NoAuth);
+    let client = EdcConnectorClient::builder()
+        .management_url(url.clone())
+        .with_auth(auth)
+        .build()
+        .unwrap();
+
+    let cfg = ConnectorConfig::new(
+        name.unwrap_or_else(|| url.clone()),
+        url,
+        config::AuthKind::Token {
+            token_alias: "unknown".to_string(),
+        },
+    );
+
+    let connector = Connector::new(cfg, client, ConnectorStatus::Connected);
+
+    App::init_with_connectors(vec![connector])
 }
 
 mod tui {
