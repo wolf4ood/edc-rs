@@ -23,6 +23,7 @@ pub struct UiTable<T: TableEntry, M> {
     pub elements: Vec<T>,
     table_state: TableState,
     on_select: Option<OnSelect<T, M>>,
+    show_block: bool,
 }
 
 impl<T: TableEntry + Debug, M> Debug for UiTable<T, M> {
@@ -42,6 +43,7 @@ impl<T: TableEntry, M> Default for UiTable<T, M> {
             elements: vec![],
             table_state: TableState::default().with_selected(0),
             on_select: None,
+            show_block: false,
         }
     }
 }
@@ -57,22 +59,25 @@ impl<T: TableEntry + Send, M: Send> Component for UiTable<T, M> {
     type Props = ();
 
     fn view(&mut self, f: &mut Frame, area: Rect) {
-        let styled_text = Span::styled(format!(" {} ", self.name), Style::default().fg(Color::Red));
-        let block = Block::default()
-            .title(Title::from(styled_text).alignment(Alignment::Center))
-            .borders(Borders::ALL);
-
         let rows = self
             .elements
             .iter()
             .map(TableEntry::row)
             .collect::<Vec<_>>();
 
-        let table = Table::default()
+        let mut table = Table::default()
             .rows(rows)
             .header(T::headers())
-            .block(block)
             .highlight_style(Style::new().add_modifier(Modifier::REVERSED));
+
+        if self.show_block {
+            let styled_text =
+                Span::styled(format!(" {} ", self.name), Style::default().fg(Color::Red));
+            let block = Block::default()
+                .title(Title::from(styled_text).alignment(Alignment::Center))
+                .borders(Borders::ALL);
+            table = table.block(block)
+        }
 
         f.render_stateful_widget(table, area, &mut self.table_state);
     }
@@ -108,6 +113,7 @@ impl<T: TableEntry, M> UiTable<T, M> {
             elements: vec![],
             table_state: TableState::default().with_selected(0),
             on_select: None,
+            show_block: false,
         }
     }
 
@@ -115,12 +121,13 @@ impl<T: TableEntry, M> UiTable<T, M> {
         InfoSheet::default()
     }
 
-    pub fn with_elements(name: String, elements: Vec<T>) -> Self {
+    pub fn with_elements(name: String, elements: Vec<T>, show_block: bool) -> Self {
         Self {
             name,
             elements,
             table_state: TableState::default().with_selected(0),
             on_select: None,
+            show_block,
         }
     }
     pub fn on_select(mut self, cb: impl Fn(&T) -> M + Send + Sync + 'static) -> Self {

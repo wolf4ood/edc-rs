@@ -12,11 +12,14 @@ use crate::{
 use super::App;
 
 impl App {
-    pub async fn fetch_assets(connector: Connector) -> anyhow::Result<Vec<AssetEntry>> {
+    pub async fn fetch_assets(
+        connector: Connector,
+        query: Query,
+    ) -> anyhow::Result<Vec<AssetEntry>> {
         Ok(connector
             .client()
             .assets()
-            .query(Query::default())
+            .query(query)
             .await?
             .into_iter()
             .map(AssetEntry::new)
@@ -25,11 +28,12 @@ impl App {
 
     pub async fn fetch_contract_definitions(
         connector: Connector,
+        query: Query,
     ) -> anyhow::Result<Vec<ContractDefinitionEntry>> {
         Ok(connector
             .client()
             .contract_definitions()
-            .query(Query::default())
+            .query(query)
             .await?
             .into_iter()
             .map(ContractDefinitionEntry::new)
@@ -38,11 +42,12 @@ impl App {
 
     pub async fn fetch_contract_negotiations(
         connector: Connector,
+        query: Query,
     ) -> anyhow::Result<Vec<ContractNegotiationEntry>> {
         Ok(connector
             .client()
             .contract_negotiations()
-            .query(Query::default())
+            .query(query)
             .await?
             .into_iter()
             .map(ContractNegotiationEntry::new)
@@ -51,11 +56,12 @@ impl App {
 
     pub async fn fetch_transfer_processes(
         connector: Connector,
+        query: Query,
     ) -> anyhow::Result<Vec<TransferProcessEntry>> {
         Ok(connector
             .client()
             .transfer_processes()
-            .query(Query::default())
+            .query(query)
             .await?
             .into_iter()
             .map(TransferProcessEntry::new)
@@ -64,11 +70,12 @@ impl App {
 
     pub async fn fetch_policies(
         connector: Connector,
+        query: Query,
     ) -> anyhow::Result<Vec<PolicyDefinitionEntry>> {
         Ok(connector
             .client()
             .policies()
-            .query(Query::default())
+            .query(query)
             .await?
             .into_iter()
             .map(PolicyDefinitionEntry::new)

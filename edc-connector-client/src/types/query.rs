@@ -2,11 +2,11 @@ use serde::{Deserialize, Serialize};
 
 use super::properties::{PropertyValue, ToValue};
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Query {
-    offset: i32,
-    limit: i32,
+    offset: u32,
+    limit: u32,
     #[serde(flatten)]
     sort: Option<Sort>,
     filter_expression: Vec<Criterion>,
@@ -15,6 +15,26 @@ pub struct Query {
 impl Query {
     pub fn builder() -> QueryBuilder {
         QueryBuilder(Query::default())
+    }
+
+    pub fn to_builder(&self) -> QueryBuilder {
+        QueryBuilder(self.clone())
+    }
+
+    pub fn offset(&self) -> u32 {
+        self.offset
+    }
+
+    pub fn limit(&self) -> u32 {
+        self.limit
+    }
+
+    pub fn sort(&self) -> Option<&Sort> {
+        self.sort.as_ref()
+    }
+
+    pub fn filter_expression(&self) -> &[Criterion] {
+        &self.filter_expression
     }
 }
 
@@ -38,12 +58,12 @@ impl QueryBuilder {
         self
     }
 
-    pub fn limit(mut self, limit: i32) -> Self {
+    pub fn limit(mut self, limit: u32) -> Self {
         self.0.limit = limit;
         self
     }
 
-    pub fn offset(mut self, offset: i32) -> Self {
+    pub fn offset(mut self, offset: u32) -> Self {
         self.0.offset = offset;
         self
     }
@@ -53,7 +73,7 @@ impl QueryBuilder {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub struct Sort {
     #[serde(rename = "sortField")]
     field: String,
@@ -65,9 +85,17 @@ impl Sort {
     pub fn new(field: String, order: SortOrder) -> Self {
         Self { field, order }
     }
+
+    pub fn field(&self) -> &str {
+        &self.field
+    }
+
+    pub fn order(&self) -> &SortOrder {
+        &self.order
+    }
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum SortOrder {
     Asc,
@@ -89,6 +117,18 @@ impl Criterion {
             operator: operator.to_string(),
             operand_right: PropertyValue(operand_right.into_value()),
         }
+    }
+
+    pub fn operand_left(&self) -> &str {
+        &self.operand_left
+    }
+
+    pub fn operator(&self) -> &str {
+        &self.operator
+    }
+
+    pub fn operand_right(&self) -> &PropertyValue {
+        &self.operand_right
     }
 }
 

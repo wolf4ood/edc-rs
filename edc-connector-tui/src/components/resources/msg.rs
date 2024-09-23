@@ -6,6 +6,8 @@ use super::resource::msg::ResourceMsg;
 pub enum ResourcesMsg<T> {
     ResourceSelected(T),
     Back,
+    NextPage,
+    PrevPage,
     TableEvent(TableMsg<Box<ResourcesMsg<T>>>),
     ResourceMsg(ResourceMsg),
     ResourcesFetched(Vec<T>),
