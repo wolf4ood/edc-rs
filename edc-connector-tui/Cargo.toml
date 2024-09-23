@@ -2,7 +2,7 @@
 name = "edc-connector-tui"
 version = "0.1.0"
 edition = "2021"
-
+repository = "https://github.com/wolf4ood/edc-rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
