@@ -124,9 +124,9 @@ impl NewPolicyDefinitionBuilder {
 impl Default for PolicyDefinition {
     fn default() -> Self {
         Self {
-            id: Default::default(),
+            id: String::default(),
             policy: Policy::builder().build(),
-            private_properties: Default::default(),
+            private_properties: Properties::default(),
         }
     }
 }
@@ -134,9 +134,9 @@ impl Default for PolicyDefinition {
 impl Default for NewPolicyDefinition {
     fn default() -> Self {
         Self {
-            id: Default::default(),
+            id: Option::default(),
             policy: Policy::builder().build(),
-            private_properties: Default::default(),
+            private_properties: Properties::default(),
         }
     }
 }
