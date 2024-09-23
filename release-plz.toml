@@ -8,7 +8,13 @@ git_tag_enable = true
 
 [[package]]
 name = "edc-connector-client"
+changelog_path = "edc-connector-client/CHANGELOG.md"
 publish = true
 release = true
 changelog_update = true
 
+[[package]]
+name = "edc-connector-tui"
+changelog_path = "edc-connector-tui/CHANGELOG.md"
+publish = false
+changelog_update = true
