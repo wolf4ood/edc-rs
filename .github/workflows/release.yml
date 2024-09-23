@@ -56,10 +56,6 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - name: ⚙️ Install deps
-        run: |
-          sudo apt-get update
-          sudo apt install libdbus-1-dev pkg-config
       - uses: actions/checkout@v4
         with:
           submodules: recursive
