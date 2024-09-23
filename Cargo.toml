@@ -33,6 +33,3 @@ pr-run-mode = "upload"
 inherits = "release"
 lto = "thin"
 
-[dist.dependencies.apt]
-pkg-config = '*'
-libdbus-1-dev ='*'
