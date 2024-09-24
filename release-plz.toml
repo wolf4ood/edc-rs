@@ -17,6 +17,5 @@ changelog_update = true
 [[package]]
 name = "edc-connector-tui"
 changelog_path = "edc-connector-tui/CHANGELOG.md"
-publish = false
-git_release_enable = true
+publish = true
 changelog_update = true
