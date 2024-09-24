@@ -82,7 +82,7 @@ impl InfoComponent {
 
         let lists = lines
             .chunks(5)
-            .map(|chunks| chunks.into_iter().map(Clone::clone).collect::<List>());
+            .map(|chunks| chunks.iter().map(Clone::clone).collect::<List>());
 
         for (idx, list) in lists.enumerate() {
             f.render_widget(list, layout[idx])
