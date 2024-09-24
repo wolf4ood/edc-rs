@@ -70,6 +70,7 @@ impl<T: DrawableResource + TableEntry + Send + Sync> ResourcesComponent<T> {
         InfoSheet::default()
             .key_binding("<n>", "Next Page")
             .key_binding("<p>", "Prev page")
+            .key_binding("<r>", "Refresh page")
     }
 
     fn fetch(&self) -> anyhow::Result<ComponentReturn<ResourcesMsg<T>>> {
@@ -222,6 +223,7 @@ impl<T: DrawableResource + TableEntry + Send + Sync> Component for ResourcesComp
                     Ok(ComponentReturn::empty())
                 }
             }
+            ResourcesMsg::RefreshPage => self.fetch(),
             ResourcesMsg::ResourceMsg(msg) => {
                 Self::forward_update(&mut self.resource, msg.into(), ResourcesMsg::ResourceMsg)
                     .await
@@ -243,6 +245,9 @@ impl<T: DrawableResource + TableEntry + Send + Sync> Component for ResourcesComp
                 }
                 ComponentEvent::Event(Event::Key(key)) if key.code == KeyCode::Char('p') => {
                     Ok(vec![ResourcesMsg::PrevPage.into()])
+                }
+                ComponentEvent::Event(Event::Key(key)) if key.code == KeyCode::Char('r') => {
+                    Ok(vec![ResourcesMsg::RefreshPage.into()])
                 }
                 _ => Self::forward_event(&mut self.table, evt, |msg| match msg {
                     TableMsg::Local(table) => ResourcesMsg::TableEvent(TableMsg::Local(table)),
