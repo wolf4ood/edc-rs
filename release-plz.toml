@@ -10,6 +10,7 @@ git_tag_enable = true
 name = "edc-connector-client"
 changelog_path = "edc-connector-client/CHANGELOG.md"
 publish = true
+release = true
 git_release_enable = true
 changelog_update = true
 
