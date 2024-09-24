@@ -1,6 +1,8 @@
 
+<div class="oranda-hide">
+  <h1 align="center">EDC-rs</h1>
+</div>
 
-<h1 align="center">EDC-rs</h1>
 <div align="center">
   <strong>
     Rust client and tools for <a href="https://github.com/eclipse-edc/Connector">EDC</a>.

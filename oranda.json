@@ -1,0 +1,11 @@
+{
+    "project": {
+        "name": "edc-rs"
+    },
+    "build": {
+        "path_prefix": "edc-rs"
+    },
+    "styles": {
+        "theme": "hacker"
+    }
+}
