@@ -52,13 +52,21 @@ impl InfoComponent {
     }
 
     fn view_key_bindings(&self, props: &InfoSheet, f: &mut Frame, rect: Rect) {
+        let layout = Layout::horizontal(vec![
+            Constraint::Percentage(20),
+            Constraint::Percentage(20),
+            Constraint::Percentage(20),
+            Constraint::Percentage(20),
+            Constraint::Percentage(20),
+        ])
+        .split(rect);
         let max = props
             .iter_key_bindings()
             .map(|(name, _)| name.len())
             .max()
             .unwrap_or(0);
 
-        let list = props
+        let lines = props
             .iter_key_bindings()
             .map(|(name, value)| {
                 let padding = max + 2 - name.len();
@@ -70,9 +78,14 @@ impl InfoComponent {
                     Span::raw(value),
                 ])
             })
-            .collect::<List>()
-            .block(Block::default());
+            .collect::<Vec<Line>>();
 
-        f.render_widget(list, rect)
+        let lists = lines
+            .chunks(5)
+            .map(|chunks| chunks.into_iter().map(Clone::clone).collect::<List>());
+
+        for (idx, list) in lists.enumerate() {
+            f.render_widget(list, layout[idx])
+        }
     }
 }
