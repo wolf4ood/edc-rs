@@ -1,5 +1,7 @@
+use crate::types::nav::Nav;
+
 use self::msg::LaunchBarMsg;
-use super::{Action, Component, ComponentEvent, ComponentMsg, ComponentReturn};
+use super::{Action, Component, ComponentEvent, ComponentMsg, ComponentReturn, Notification};
 use ratatui::{
     layout::Rect,
     style::Style,
@@ -9,7 +11,7 @@ use ratatui::{
 use tui_textarea::{Input, Key, TextArea};
 pub mod msg;
 
-pub static PROMPT: &str = "$ ";
+pub static PROMPT: &str = " $> ";
 
 #[derive(Debug)]
 pub struct LaunchBar {
@@ -49,6 +51,10 @@ impl Component for LaunchBar {
             LaunchBarMsg::Quit => Ok(ComponentReturn::action(Action::Quit)),
             LaunchBarMsg::Esc => Ok(ComponentReturn::action(Action::Esc)),
             LaunchBarMsg::NavTo(nav) => Ok(ComponentReturn::action(Action::NavTo(nav))),
+            LaunchBarMsg::Error(err) => Ok(ComponentReturn::action(Action::Notification(
+                Notification::error(err),
+            ))),
+            LaunchBarMsg::Loop => Ok(ComponentReturn::empty()),
         }
     }
 
@@ -72,10 +78,13 @@ impl Component for LaunchBar {
                         })
                         .into(),
                     ]),
+                    Key::Tab => Ok(vec![LaunchBarMsg::Loop.into()]),
                     Key::Enter if current == "q!" => Ok(vec![LaunchBarMsg::Quit.into()]),
-                    Key::Enter if !current.is_empty() => {
-                        Ok(vec![LaunchBarMsg::NavTo(current.parse()?).into()])
-                    }
+                    Key::Enter if !current.is_empty() => match current.parse::<Nav>() {
+                        Ok(nav) => Ok(vec![LaunchBarMsg::NavTo(nav).into()]),
+                        Err(err) => Ok(vec![LaunchBarMsg::Error(err.to_string()).into()]),
+                    },
+                    Key::Enter => Ok(vec![LaunchBarMsg::Esc.into()]),
                     Key::Esc => Ok(vec![LaunchBarMsg::Esc.into()]),
                     _ => Ok(vec![LaunchBarMsg::AppendCommand(input).into()]),
                 }

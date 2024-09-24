@@ -7,5 +7,7 @@ pub enum LaunchBarMsg {
     AppendCommand(Input),
     Quit,
     NavTo(Nav),
+    Error(String),
+    Loop,
     Esc,
 }
