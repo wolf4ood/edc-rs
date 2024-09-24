@@ -18,4 +18,5 @@ changelog_update = true
 name = "edc-connector-tui"
 changelog_path = "edc-connector-tui/CHANGELOG.md"
 publish = true
+release = true
 changelog_update = true
