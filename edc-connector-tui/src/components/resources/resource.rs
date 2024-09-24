@@ -49,7 +49,10 @@ impl<T> Default for ResourceComponent<T> {
 
 impl<T> ResourceComponent<T> {
     pub fn info_sheet(&self) -> InfoSheet {
-        InfoSheet::default().key_binding("<y>", "Copy value")
+        InfoSheet::default()
+            .key_binding("<j/down>", "Down")
+            .key_binding("<k/down>", "Up")
+            .key_binding("<y>", "Copy value")
     }
 }
 
@@ -83,8 +86,8 @@ impl<T: DrawableResource> ResourceComponent<T> {
 
     fn handle_key(&self, key: KeyEvent) -> Vec<ComponentMsg<ResourceMsg>> {
         match key.code {
-            KeyCode::Char('j') => vec![(ComponentMsg(ResourceMsg::MoveDown))],
-            KeyCode::Char('k') => vec![(ComponentMsg(ResourceMsg::MoveUp))],
+            KeyCode::Char('j') | KeyCode::Down => vec![(ComponentMsg(ResourceMsg::MoveDown))],
+            KeyCode::Char('k') | KeyCode::Up => vec![(ComponentMsg(ResourceMsg::MoveUp))],
             KeyCode::Char('y') => vec![(ComponentMsg(ResourceMsg::Yank))],
             _ => vec![],
         }

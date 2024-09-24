@@ -119,6 +119,8 @@ impl<T: TableEntry, M> UiTable<T, M> {
 
     pub fn info_sheet(&self) -> InfoSheet {
         InfoSheet::default()
+            .key_binding("<j/down>", "Down")
+            .key_binding("<k/down>", "Up")
     }
 
     pub fn with_elements(name: String, elements: Vec<T>, show_block: bool) -> Self {
@@ -152,8 +154,10 @@ impl<T: TableEntry, M> UiTable<T, M> {
                     vec![]
                 }
             }
-            KeyCode::Char('j') => vec![(ComponentMsg(TableLocalMsg::MoveDown.into()))],
-            KeyCode::Char('k') => vec![(ComponentMsg(TableLocalMsg::MoveUp.into()))],
+            KeyCode::Char('j') | KeyCode::Down => {
+                vec![(ComponentMsg(TableLocalMsg::MoveDown.into()))]
+            }
+            KeyCode::Char('k') | KeyCode::Up => vec![(ComponentMsg(TableLocalMsg::MoveUp.into()))],
             _ => vec![],
         }
     }
