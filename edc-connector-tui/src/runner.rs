@@ -23,7 +23,6 @@ impl<C: Component + ActionHandler<Msg = <C as Component>::Msg> + Send> Runner<C>
         terminal.clear()?;
 
         let mut should_quit = false;
-        let action_queue = Arc::new(Mutex::new(VecDeque::<Action>::new()));
         let async_msgs = Arc::new(Mutex::new(
             VecDeque::<ComponentMsg<<C as Component>::Msg>>::new(),
         ));
@@ -63,38 +62,22 @@ impl<C: Component + ActionHandler<Msg = <C as Component>::Msg> + Send> Runner<C>
                     }
 
                     for c in ret.cmds {
-                        for m in c.await.unwrap() {
-                            msgs.push_back(m);
-                        }
+                        let inner_async_msg = async_msgs.clone();
+                        tokio::task::spawn(async move {
+                            for m in c.await.unwrap() {
+                                let mut msg_guard = inner_async_msg.lock().await;
+                                msg_guard.push_back(m);
+                            }
+                        });
                     }
 
                     ret.actions
                 };
 
                 for a in actions {
-                    if let Action::Spawn(handler) = a {
-                        let inner_action_queue = action_queue.clone();
-                        tokio::task::spawn(async move {
-                            if let Ok(action) = handler.await {
-                                inner_action_queue.lock().await.push_back(action)
-                            }
-                        });
-                    } else {
-                        should_quit = should_quit || matches!(a, Action::Quit);
-                        for m in self.component.handle_action(a)? {
-                            msgs.push_back(m)
-                        }
-                    }
-                }
-            }
-            let mut guard = action_queue.lock().await;
-            let mut msg_guard = async_msgs.lock().await;
-            while let Some(a) = guard.pop_front() {
-                if let Action::Spawn(_) = a {
-                } else {
                     should_quit = should_quit || matches!(a, Action::Quit);
                     for m in self.component.handle_action(a)? {
-                        msg_guard.push_back(m)
+                        msgs.push_back(m)
                     }
                 }
             }

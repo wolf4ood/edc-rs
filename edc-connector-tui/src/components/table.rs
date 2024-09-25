@@ -54,7 +54,7 @@ pub trait TableEntry {
 }
 
 #[async_trait::async_trait]
-impl<T: TableEntry + Send, M: Send> Component for UiTable<T, M> {
+impl<T: TableEntry + Send, M: Send + 'static> Component for UiTable<T, M> {
     type Msg = TableMsg<M>;
     type Props = ();
 

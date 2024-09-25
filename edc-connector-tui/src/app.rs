@@ -6,6 +6,7 @@ mod msg;
 
 use crossterm::event::{self, Event, KeyCode};
 use edc_connector_client::{Auth, EdcConnectorClient};
+use futures::FutureExt;
 use keyring::Entry;
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
@@ -18,8 +19,8 @@ use crate::{
         contract_definitions::ContractDefinitionsComponent,
         contract_negotiations::ContractNegotiationsComponent, footer::Footer,
         header::HeaderComponent, launch_bar::LaunchBar, policies::PolicyDefinitionsComponent,
-        transfer_processes::TransferProcessesComponent, Action, Component, ComponentEvent,
-        ComponentMsg, ComponentReturn, Notification, NotificationMsg,
+        transfer_processes::TransferProcessesComponent, Component, ComponentEvent, ComponentMsg,
+        ComponentReturn, Notification, NotificationMsg,
     },
     config::{AuthKind, Config, ConnectorConfig},
     types::{
@@ -126,11 +127,13 @@ impl App {
         let timeout = noty.timeout();
         self.footer.show_notification(noty);
 
-        let action = Action::spawn(async move {
-            tokio::time::sleep(Duration::from_secs(timeout)).await;
-            Ok(Action::ClearNotification)
-        });
-        Ok(ComponentReturn::action(action))
+        Ok(ComponentReturn::cmd(
+            async move {
+                tokio::time::sleep(Duration::from_secs(timeout)).await;
+                Ok(vec![AppMsg::NontificationMsg(NotificationMsg::Clear).into()])
+            }
+            .boxed(),
+        ))
     }
 
     pub fn clear_notification(&mut self) -> anyhow::Result<ComponentReturn<AppMsg>> {

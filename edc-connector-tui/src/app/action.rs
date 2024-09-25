@@ -16,10 +16,6 @@ impl ActionHandler for App {
                 crate::components::NotificationMsg::Show(noty),
             )
             .into()]),
-            (_, Action::ClearNotification) => Ok(vec![AppMsg::NontificationMsg(
-                crate::components::NotificationMsg::Clear,
-            )
-            .into()]),
             _ => Ok(vec![]),
         }
     }

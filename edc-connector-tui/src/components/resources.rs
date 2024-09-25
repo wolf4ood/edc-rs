@@ -43,7 +43,7 @@ pub struct ResourcesComponent<T: TableEntry> {
     page_size: u32,
 }
 
-impl<T: DrawableResource + TableEntry + Send + Sync> ResourcesComponent<T> {
+impl<T: DrawableResource + TableEntry + Send + Sync + 'static> ResourcesComponent<T> {
     pub fn on_fetch<F, Fut>(mut self, on_fetch: F) -> Self
     where
         F: Fn(Connector, Query) -> Fut + Send + Sync + 'static,
@@ -77,9 +77,12 @@ impl<T: DrawableResource + TableEntry + Send + Sync> ResourcesComponent<T> {
         if let (Some(connector), Some(on_fetch)) = (self.connector.as_ref(), self.on_fetch.as_ref())
         {
             let query = self.query.clone();
+
+            let connector = connector.clone();
+            let on_fetch = on_fetch.clone();
             Ok(ComponentReturn::cmd(
                 async move {
-                    match on_fetch(connector, query).await {
+                    match on_fetch(&connector, query).await {
                         Ok(elements) => Ok(vec![ResourcesMsg::ResourcesFetched(elements).into()]),
                         Err(err) => Ok(vec![
                             ResourcesMsg::ResourcesFetchFailed(err.to_string()).into()
@@ -160,7 +163,7 @@ impl<T: DrawableResource + TableEntry + Clone> Default for ResourcesComponent<T>
 }
 
 #[async_trait::async_trait]
-impl<T: DrawableResource + TableEntry + Send + Sync> Component for ResourcesComponent<T> {
+impl<T: DrawableResource + TableEntry + Send + Sync + 'static> Component for ResourcesComponent<T> {
     type Msg = ResourcesMsg<T>;
     type Props = Connector;
 
