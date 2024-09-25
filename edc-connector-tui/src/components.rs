@@ -1,4 +1,4 @@
-use std::{fmt::Debug, future::Future, sync::Arc};
+use std::{fmt::Debug, sync::Arc};
 
 use crossterm::event::Event;
 use futures::{future::BoxFuture, FutureExt};
@@ -26,7 +26,7 @@ pub trait StatelessComponent {
 
 #[async_trait::async_trait]
 pub trait Component {
-    type Msg: Send;
+    type Msg: Send + 'static;
     type Props: Send;
 
     async fn init(&mut self, _props: Self::Props) -> anyhow::Result<ComponentReturn<Self::Msg>> {
@@ -49,14 +49,14 @@ pub trait Component {
         Ok(vec![])
     }
 
-    async fn forward_update<'a, F, C>(
-        other: &'a mut C,
+    async fn forward_update<F, C>(
+        other: &mut C,
         msg: ComponentMsg<C::Msg>,
         mapper: F,
     ) -> anyhow::Result<ComponentReturn<Self::Msg>>
     where
-        F: Fn(C::Msg) -> Self::Msg + Send + Sync + 'a,
-        C: Component + Sync + Send + 'a,
+        F: Fn(C::Msg) -> Self::Msg + Send + Sync + 'static,
+        C: Component + Sync + Send + 'static,
     {
         Ok(other.update(msg).await?.map(mapper))
     }
@@ -67,8 +67,8 @@ pub trait Component {
         mapper: F,
     ) -> anyhow::Result<ComponentReturn<Self::Msg>>
     where
-        F: Fn(C::Msg) -> Self::Msg + Send + Sync + 'a,
-        C: Component + Sync + Send + 'a,
+        F: Fn(C::Msg) -> Self::Msg + Send + Sync + 'static,
+        C: Component + Sync + Send + 'static,
     {
         Ok(other.init(props).await?.map(mapper))
     }
@@ -94,13 +94,13 @@ pub trait Component {
 pub struct ComponentMsg<T>(T);
 
 #[derive(Default)]
-pub struct ComponentReturn<'a, T> {
+pub struct ComponentReturn<T> {
     pub(crate) msgs: Vec<ComponentMsg<T>>,
-    pub(crate) cmds: Vec<BoxFuture<'a, anyhow::Result<Vec<ComponentMsg<T>>>>>,
+    pub(crate) cmds: Vec<BoxFuture<'static, anyhow::Result<Vec<ComponentMsg<T>>>>>,
     pub(crate) actions: Vec<Action>,
 }
 
-impl<'a, T: Debug> Debug for ComponentReturn<'a, T> {
+impl<T: Debug> Debug for ComponentReturn<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("ComponentReturn")
             .field("msgs", &self.msgs)
@@ -109,34 +109,13 @@ impl<'a, T: Debug> Debug for ComponentReturn<'a, T> {
     }
 }
 
+#[derive(Debug)]
 pub enum Action {
     Quit,
     Esc,
     NavTo(Nav),
     ChangeSheet,
     Notification(Notification),
-    ClearNotification,
-    Spawn(BoxFuture<'static, anyhow::Result<Action>>),
-}
-
-impl Action {
-    pub fn spawn(fut: impl Future<Output = anyhow::Result<Action>> + Send + 'static) -> Action {
-        Action::Spawn(fut.boxed())
-    }
-}
-
-impl Debug for Action {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Quit => write!(f, "Quit"),
-            Self::Esc => write!(f, "Esc"),
-            Self::NavTo(arg0) => f.debug_tuple("NavTo").field(arg0).finish(),
-            Self::ChangeSheet => write!(f, "ChangeSheet"),
-            Self::Notification(arg0) => f.debug_tuple("Notification").field(arg0).finish(),
-            Self::Spawn(_arg0) => f.debug_tuple("Spawn").finish(),
-            Self::ClearNotification => f.debug_tuple("ClearNotification").finish(),
-        }
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -202,8 +181,10 @@ impl<T> ComponentMsg<T> {
     }
 }
 
-impl<'a, T: 'a> ComponentReturn<'a, T> {
-    pub fn cmd(cmd: BoxFuture<'a, anyhow::Result<Vec<ComponentMsg<T>>>>) -> ComponentReturn<'a, T> {
+impl<T: 'static> ComponentReturn<T> {
+    pub fn cmd(
+        cmd: BoxFuture<'static, anyhow::Result<Vec<ComponentMsg<T>>>>,
+    ) -> ComponentReturn<T> {
         ComponentReturn {
             msgs: vec![],
             cmds: vec![cmd],
@@ -211,7 +192,7 @@ impl<'a, T: 'a> ComponentReturn<'a, T> {
         }
     }
 
-    pub fn empty() -> ComponentReturn<'a, T> {
+    pub fn empty() -> ComponentReturn<T> {
         ComponentReturn {
             msgs: vec![],
             cmds: vec![],
@@ -219,7 +200,7 @@ impl<'a, T: 'a> ComponentReturn<'a, T> {
         }
     }
 
-    pub fn action(action: Action) -> ComponentReturn<'a, T> {
+    pub fn action(action: Action) -> ComponentReturn<T> {
         ComponentReturn {
             msgs: vec![],
             cmds: vec![],
@@ -227,9 +208,9 @@ impl<'a, T: 'a> ComponentReturn<'a, T> {
         }
     }
 
-    pub fn map<M, F>(self, mapper: F) -> ComponentReturn<'a, M>
+    pub fn map<M, F>(self, mapper: F) -> ComponentReturn<M>
     where
-        F: Fn(T) -> M + Sync + Send + 'a,
+        F: Fn(T) -> M + Sync + Send + 'static,
     {
         let msgs = self.msgs.into_iter().map(|msg| msg.map(&mapper)).collect();
 
@@ -265,7 +246,7 @@ impl<T> From<T> for ComponentMsg<T> {
     }
 }
 
-impl<T> From<ComponentMsg<T>> for ComponentReturn<'_, T> {
+impl<T> From<ComponentMsg<T>> for ComponentReturn<T> {
     fn from(value: ComponentMsg<T>) -> Self {
         ComponentReturn {
             msgs: vec![value],
