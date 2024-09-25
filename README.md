@@ -114,4 +114,44 @@ cargo test
 The tests setup was mostly derived by the Typescript client [edc-connector-client](https://github.com/Think-iT-Labs/edc-connector-client)
 
 
+## edc-connector-tui
 
+![Demo Animation](media/demo.gif)
+
+
+The TUI client can either run with a single connector configured via cli args:
+
+```bash
+edc-connector-tui connector --url http://localhost:29193/management --token 123456
+```
+
+
+
+or if no args provided it will try to read connectors configuration from the file at `~/.config/edc-connector-tui/config.toml`
+
+
+The file should contain the list of configured connectors:
+
+``` toml
+[[connectors]]
+name="FirstConnector"
+address="http://localhost:29193/management"
+auth= { type = "token", token_alias = "connector_alias" }
+
+[[connectors]]
+name="SecondConnector"
+address="http://myconnector.xyz/management"
+```
+
+
+The `token_alias` is used to fetch the actual token from the system keyring for the service `edc-connector-tui`.
+
+
+For configuration above the `token` could be set with `secret-tool` on Linux:
+
+``` sh
+secret-tool store --label="FirstConnector" service edc-connector-tui username connector_alias
+```
+
+> Altough `edc-connector-tui` builds for OSX and Windows are available, it has been only tested on Linux.
+> Contributions are welcome for multiplatform support/testing 
