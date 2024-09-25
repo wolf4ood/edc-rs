@@ -119,12 +119,25 @@ The tests setup was mostly derived by the Typescript client [edc-connector-clien
 ![Demo Animation](media/demo.gif)
 
 
+### Install
+
+Fetch a latest release [here](https://github.com/wolf4ood/edc-rs/releases)
+
+
+or install with cargo
+
+``` sh
+cargo install edc-connector-tui
+```
+
+
+### Run
+
 The TUI client can either run with a single connector configured via cli args:
 
 ```bash
 edc-connector-tui connector --url http://localhost:29193/management --token 123456
 ```
-
 
 
 or if no args provided it will try to read connectors configuration from the file at `~/.config/edc-connector-tui/config.toml`
