@@ -1,20 +1,36 @@
 use app::App;
 use clap::{Parser, Subcommand};
 use config::{default_file, Config, ConnectorConfig};
+use directories::ProjectDirs;
 use edc_connector_client::{Auth, EdcConnectorClient};
+use lazy_static::lazy_static;
 use runner::Runner;
 use std::{path::PathBuf, time::Duration};
+use tracing_error::ErrorLayer;
+use tracing_subscriber::{self, layer::SubscriberExt, util::SubscriberInitExt, Layer};
 use types::connector::{Connector, ConnectorStatus};
+
 mod app;
 mod components;
 mod config;
 mod runner;
 mod types;
 
+lazy_static! {
+    pub static ref PROJECT_NAME: String = env!("CARGO_CRATE_NAME").to_uppercase().to_string();
+    pub static ref DATA_FOLDER: Option<PathBuf> =
+        std::env::var(format!("{}_DATA", PROJECT_NAME.clone()))
+            .ok()
+            .map(PathBuf::from);
+    pub static ref LOG_ENV: String = format!("{}_LOGLEVEL", PROJECT_NAME.clone());
+    pub static ref LOG_FILE: String = format!("{}.log", env!("CARGO_PKG_NAME"));
+}
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
     tui::install_panic_hook();
+    initialize_logging()?;
     let terminal = tui::init_terminal()?;
 
     let app = match cli.mode {
@@ -110,4 +126,66 @@ pub enum Commands {
         #[arg(short, long)]
         token: Option<String>,
     },
+}
+
+fn project_directory() -> Option<ProjectDirs> {
+    ProjectDirs::from("com", "edc-rs", env!("CARGO_PKG_NAME"))
+}
+
+pub fn get_data_dir() -> PathBuf {
+    let directory = if let Some(s) = DATA_FOLDER.clone() {
+        s
+    } else if let Some(proj_dirs) = project_directory() {
+        proj_dirs.data_local_dir().to_path_buf()
+    } else {
+        PathBuf::from(".").join(".data")
+    };
+    directory
+}
+
+pub fn initialize_logging() -> anyhow::Result<()> {
+    let directory = get_data_dir();
+    std::fs::create_dir_all(directory.clone())?;
+    let log_path = directory.join(LOG_FILE.clone());
+    let log_file = std::fs::File::create(log_path)?;
+
+    std::env::set_var(
+        "RUST_LOG",
+        std::env::var("RUST_LOG")
+            .or_else(|_| std::env::var(LOG_ENV.clone()))
+            .unwrap_or_else(|_| format!("{}=info", env!("CARGO_CRATE_NAME"))),
+    );
+    let file_subscriber = tracing_subscriber::fmt::layer()
+        .with_file(true)
+        .with_line_number(true)
+        .with_writer(log_file)
+        .with_target(false)
+        .with_ansi(false)
+        .with_filter(tracing_subscriber::filter::EnvFilter::from_default_env());
+    tracing_subscriber::registry()
+        .with(file_subscriber)
+        .with(ErrorLayer::default())
+        .init();
+    Ok(())
+}
+
+#[macro_export]
+macro_rules! trace_dbg {
+    (target: $target:expr, level: $level:expr, $ex:expr) => {{
+        match $ex {
+            value => {
+                tracing::event!(target: $target, $level, ?value, stringify!($ex));
+                value
+            }
+        }
+    }};
+    (level: $level:expr, $ex:expr) => {
+        trace_dbg!(target: module_path!(), level: $level, $ex)
+    };
+    (target: $target:expr, $ex:expr) => {
+        trace_dbg!(target: $target, level: tracing::Level::DEBUG, $ex)
+    };
+    ($ex:expr) => {
+        trace_dbg!(level: tracing::Level::DEBUG, $ex)
+    };
 }
