@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en" id="oranda" class="hacker">
+  <head>
+    <title>edc-rs</title>
+    
+    
+      <link rel="icon" href="/edc-rs/favicon.ico" />
+    
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="edc-rs" />
+    
+    
+    
+    <meta http-equiv="Permissions-Policy" content="interest-cohort=()" />
+    <link rel="stylesheet" href="/edc-rs/oranda-v0.6.1.css" />
+    
+    
+  </head>
+  <body>
+    <div class="container">
+      <div class="page-body">
+        
+
+        <main>
+          <header>
+            
+            <h1 class="title">edc-rs</h1>
+            
+          </header>
+
+          
+
+
+    <div class="oranda-hide">
+  <h1>EDC-rs</h1>
+</div>
+<div>
+  <strong>
+    Rust client and tools for <a href="https://github.com/eclipse-edc/Connector" rel="noopener noreferrer">EDC</a>.
+  </strong>
+</div>
+<br>
+<div>
+  <a href="https://github.com/dataspace-rs/edc-rs?query=workflow%3ATests" rel="noopener noreferrer">
+    <img src="https://github.com/dataspace-rs/edc-rs/workflows/Tests/badge.svg" alt="Tests status">
+  </a>
+  <a href="https://crates.io/crates/edc-connector-client" rel="noopener noreferrer">
+    <img src="https://img.shields.io/crates/d/edc-connector-client.svg?style=flat-square" alt="Download">
+  </a>
+  <a href="https://docs.rs/edc-connector-client" rel="noopener noreferrer">
+    <img src="https://img.shields.io/badge/docs-latest-blue.svg?style=flat-square" alt="docs.rs docs">
+  </a>
+   <a href="https://opensource.org/licenses/Apache-2.0" rel="noopener noreferrer">
+    <img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="license">
+  </a>
+   <a href="https://deps.rs/repo/github/dataspace-rs/edc-rs" rel="noopener noreferrer">
+    <img src="https://deps.rs/repo/github/dataspace-rs/edc-rs/status.svg" alt="license">
+  </a>
+</div>
+<h2>edc-connector-client</h2>
+<p>A Rust client for <a href="https://github.com/eclipse-edc/Connector" rel="noopener noreferrer">EDC</a>.</p>
+<h3>Installation</h3>
+<p>Install from <a href="https://crates.io/" rel="noopener noreferrer">crates.io</a></p>
+<pre style="background-color:#263238;"><span style="color:#89ddff;">[dependencies]
+</span><span style="color:#f07178;">edc-connector-client </span><span style="color:#89ddff;">= "</span><span style="color:#c3e88d;">0.1</span><span style="color:#89ddff;">"
+</span></pre>
+
+<h3>Examples</h3>
+<h4>Basic usage</h4>
+<p>Fetching an asset with id <code>1</code> and reading the <code>description</code> property as string.</p>
+<pre style="background-color:#263238;"><span style="color:#c792ea;">use </span><span style="color:#eeffff;">edc_connector_client</span><span style="color:#89ddff;">::{</span><span style="color:#eeffff;">Auth</span><span style="color:#89ddff;">,</span><span style="color:#eeffff;"> EdcConnectorClient</span><span style="color:#89ddff;">};
+</span><span style="color:#eeffff;">
+</span><span style="color:#89ddff;">#[</span><span style="color:#eeffff;">tokio::main</span><span style="color:#89ddff;">]
+</span><span style="color:#eeffff;">async </span><span style="font-style:italic;color:#c792ea;">fn </span><span style="color:#82aaff;">main</span><span style="color:#89ddff;">() -&gt; </span><span style="color:#eeffff;">Result</span><span style="color:#89ddff;">&lt;()</span><span style="color:#eeffff;">, Box</span><span style="color:#89ddff;">&lt;</span><span style="color:#eeffff;">dyn std</span><span style="color:#89ddff;">::</span><span style="color:#eeffff;">error</span><span style="color:#89ddff;">::</span><span style="color:#eeffff;">Error</span><span style="color:#89ddff;">&gt;&gt; {
+</span><span style="color:#eeffff;">    </span><span style="font-style:italic;color:#c792ea;">let</span><span style="color:#eeffff;"> client </span><span style="color:#89ddff;">= </span><span style="color:#eeffff;">EdcConnectorClient</span><span style="color:#89ddff;">::</span><span style="color:#eeffff;">builder</span><span style="color:#89ddff;">()
+</span><span style="color:#eeffff;">        .</span><span style="color:#82aaff;">management_url</span><span style="color:#89ddff;">("</span><span style="color:#c3e88d;">http://myedc</span><span style="color:#89ddff;">")
+</span><span style="color:#eeffff;">        .</span><span style="color:#82aaff;">with_auth</span><span style="color:#89ddff;">(</span><span style="color:#eeffff;">Auth</span><span style="color:#89ddff;">::</span><span style="color:#eeffff;">api_token</span><span style="color:#89ddff;">("</span><span style="color:#c3e88d;">password</span><span style="color:#89ddff;">"))
+</span><span style="color:#eeffff;">        .</span><span style="color:#82aaff;">build</span><span style="color:#89ddff;">()?;
+</span><span style="color:#eeffff;">
+</span><span style="color:#eeffff;">    </span><span style="font-style:italic;color:#c792ea;">let</span><span style="color:#eeffff;"> asset </span><span style="color:#89ddff;">=</span><span style="color:#eeffff;"> client.</span><span style="color:#82aaff;">assets</span><span style="color:#89ddff;">()</span><span style="color:#eeffff;">.</span><span style="color:#82aaff;">get</span><span style="color:#89ddff;">("</span><span style="color:#c3e88d;">1</span><span style="color:#89ddff;">")</span><span style="color:#eeffff;">.await</span><span style="color:#89ddff;">?;
+</span><span style="color:#eeffff;">
+</span><span style="color:#eeffff;">    println!</span><span style="color:#89ddff;">("</span><span style="color:#c3e88d;">Got </span><span style="color:#eeffff;">{:?}</span><span style="color:#89ddff;">",</span><span style="color:#eeffff;"> asset</span><span style="color:#89ddff;">);
+</span><span style="color:#eeffff;">
+</span><span style="color:#eeffff;">    println!</span><span style="color:#89ddff;">(
+</span><span style="color:#eeffff;">        </span><span style="color:#89ddff;">"</span><span style="color:#c3e88d;">Property description: </span><span style="color:#eeffff;">{:?}</span><span style="color:#89ddff;">",
+</span><span style="color:#eeffff;">        asset.property</span><span style="color:#89ddff;">::&lt;</span><span style="color:#eeffff;">String</span><span style="color:#89ddff;">&gt;("</span><span style="color:#c3e88d;">description</span><span style="color:#89ddff;">")</span><span style="color:#eeffff;">.</span><span style="color:#82aaff;">unwrap</span><span style="color:#89ddff;">()
+</span><span style="color:#eeffff;">    </span><span style="color:#89ddff;">);
+</span><span style="color:#eeffff;">
+</span><span style="color:#eeffff;">    </span><span style="color:#ffcb6b;">Ok</span><span style="color:#89ddff;">(())
+</span><span style="color:#89ddff;">}
+</span></pre>
+
+<h3>Development</h3>
+<h4>Compiling</h4>
+<pre style="background-color:#263238;"><span style="color:#eeffff;">git clone https://github.com/dataspace-rs/edc-rs.git
+</span><span style="color:#eeffff;">cd edc-rs
+</span><span style="color:#eeffff;">cargo build
+</span></pre>
+
+<h4>Testing</h4>
+<p>Some tests run against a running instance of EDC.</p>
+<p>You can use docker compose to start an instance for testing.</p>
+<pre style="background-color:#263238;"><span style="color:#eeffff;">docker compose -f testing/docker-compose.yml up -d
+</span><span style="color:#eeffff;">cargo test 
+</span></pre>
+
+<p>The tests setup was mostly derived by the Typescript client <a href="https://github.com/Think-iT-Labs/edc-connector-client" rel="noopener noreferrer">edc-connector-client</a></p>
+
+
+
+        </main>
+      </div>
+
+      <footer>
+        
+        <span>
+          edc-rs
+        </span>
+      </footer>
+    </div>
+
+    
+    
+
+    
+
+
+  </body>
+</html>
