@@ -13,10 +13,3 @@ publish = true
 release = true
 git_release_enable = true
 changelog_update = true
-
-[[package]]
-name = "edc-connector-tui"
-changelog_path = "edc-connector-tui/CHANGELOG.md"
-publish = true
-release = true
-changelog_update = true

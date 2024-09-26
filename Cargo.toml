@@ -1,8 +1,7 @@
 [workspace]
 resolver="2"
 members = [
-    "edc-connector-client",
-    "edc-connector-tui"
+    "edc-connector-client"
 ]
 
 [workspace.dependencies]
@@ -15,25 +14,4 @@ serde_with= "3.7.0"
 tokio= {version="1", features=["full"]}
 uuid = { version ="1", features = ["v4"] }
 
-# Config for 'cargo dist'
-[workspace.metadata.dist]
-# The preferred cargo-dist version to use in CI (Cargo.toml SemVer syntax)
-cargo-dist-version = "0.22.1"
-# CI backends to support
-ci = "github"
-# The installers to generate for each app
-installers = []
-# Target platforms to build apps for (Rust target-triple syntax)
-targets = ["aarch64-apple-darwin", "x86_64-apple-darwin", "x86_64-unknown-linux-gnu"]
-allow-dirty = ["ci"]
-pr-run-mode = "plan"
-
-[workspace.metadata.dist.dependencies.apt]
-pkg-config = '*'
-libdbus-1-dev ='*'
-
-# The profile that 'cargo dist' will build with
-[profile.dist]
-inherits = "release"
-lto = "thin"
 
