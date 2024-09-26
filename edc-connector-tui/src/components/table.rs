@@ -20,7 +20,7 @@ pub type OnSelect<T, M> = Box<dyn Fn(&T) -> M + Send + Sync>;
 
 pub struct UiTable<T: TableEntry, M> {
     name: String,
-    pub elements: Vec<T>,
+    elements: Vec<T>,
     table_state: TableState,
     on_select: Option<OnSelect<T, M>>,
     show_block: bool,
@@ -123,6 +123,13 @@ impl<T: TableEntry, M> UiTable<T, M> {
             .key_binding("<k/down>", "Up")
     }
 
+    pub fn update_elements(&mut self, elements: Vec<T>) {
+        self.elements = elements;
+        if self.table_state.selected().is_none() {
+            self.table_state.select_first();
+        }
+    }
+
     pub fn with_elements(name: String, elements: Vec<T>, show_block: bool) -> Self {
         Self {
             name,
@@ -132,6 +139,7 @@ impl<T: TableEntry, M> UiTable<T, M> {
             show_block,
         }
     }
+
     pub fn on_select(mut self, cb: impl Fn(&T) -> M + Send + Sync + 'static) -> Self {
         self.on_select = Some(Box::new(cb));
         self
@@ -178,5 +186,9 @@ impl<T: TableEntry, M> UiTable<T, M> {
             None => 0,
         };
         self.table_state.select(Some(new_pos))
+    }
+
+    pub fn elements(&self) -> &[T] {
+        &self.elements
     }
 }
