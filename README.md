@@ -12,8 +12,8 @@
 <br />
 
 <div align="center">
-  <a href="https://github.com/wolf4ood/edc-rs?query=workflow%3ATests">
-    <img src="https://github.com/wolf4ood/edc-rs/workflows/Tests/badge.svg"
+  <a href="https://github.com/dataspace-rs/edc-rs?query=workflow%3ATests">
+    <img src="https://github.com/dataspace-rs/edc-rs/workflows/Tests/badge.svg"
     alt="Tests status" />
   </a>
   
@@ -31,8 +31,8 @@
       alt="license" />
   </a>
 
-   <a href="https://deps.rs/repo/github/wolf4ood/edc-rs">
-    <img src="https://deps.rs/repo/github/wolf4ood/edc-rs/status.svg"
+   <a href="https://deps.rs/repo/github/dataspace-rs/edc-rs">
+    <img src="https://deps.rs/repo/github/dataspace-rs/edc-rs/status.svg"
       alt="license" />
   </a>
 
@@ -94,7 +94,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 #### Compiling
 
 ```
-git clone https://github.com/wolf4ood/edc-rs.git
+git clone https://github.com/dataspace-rs/edc-rs.git
 cd edc-rs
 cargo build
 ```
@@ -121,7 +121,7 @@ The tests setup was mostly derived by the Typescript client [edc-connector-clien
 
 ### Install
 
-Fetch a latest release [here](https://github.com/wolf4ood/edc-rs/releases)
+Fetch a latest release [here](https://github.com/dataspace-rs/edc-rs/releases)
 
 
 or install with cargo
