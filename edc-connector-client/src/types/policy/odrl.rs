@@ -7,41 +7,74 @@ mod tests {
     #[test]
     fn should_deserialize_odrl() {
         let json = json!({
-            "@context": "http://www.w3.org/ns/odrl.jsonld",
             "@type": "Set",
-            "uid": "https://w3c.github.io/odrl/bp/examples/3",
-            "permission": [{
-                "target": "http://example.com/asset:9898.movie",
+            "assigner": "assigner",
+            "assignee": "assignee",
+            "target": "target",
+            "obligation": [{
                 "action": "display",
                 "constraint": [{
                    "leftOperand": "spatial",
                    "operator": "eq",
                    "rightOperand":  "https://www.wikidata.org/resource/Q183",
-                     "dct:comment": "i.e Germany"
+               }]
+            }],
+            "permission": [{
+                "action": "display",
+                "constraint": [{
+                   "leftOperand": "spatial",
+                   "operator": "eq",
+                   "rightOperand":  "https://www.wikidata.org/resource/Q183",
+               }]
+            }],
+            "prohibition": [{
+                "action": "display",
+                "constraint": [{
+                   "leftOperand": "spatial",
+                   "operator": "eq",
+                   "rightOperand":  "https://www.wikidata.org/resource/Q183",
                }]
             }]
         });
 
-        let policy = serde_json::from_value::<Policy>(json).unwrap();
+        let policy = serde_json::from_value::<Policy>(json.clone()).unwrap();
 
-        assert_eq!(policy.kind(), &PolicyKind::Set);
-        assert_eq!(policy.permissions().len(), 1);
+        let serialized = serde_json::to_value(&policy).unwrap();
 
-        let permission = &policy.permissions[0];
+        assert_eq!(&json, &serialized);
+    }
 
-        assert_eq!(permission.action().id(), "display");
-        assert_eq!(permission.constraints().len(), 1);
+    #[test]
+    fn should_deserialize_odrl_with_multiplicity_constraints() {
+        let json = json!({
+            "@type":"Set",
+            "assigner":"assigner",
+            "assignee":"assignee",
+            "target":"target",
+            "obligation":[
+                {
+                    "action":"display",
+                    "constraint":[{
+                        "and":[
+                            {
+                                "leftOperand":"spatial",
+                                "operator":"eq",
+                                "rightOperand":"https://www.wikidata.org/resource/Q183"
+                            }
+                        ]
+                    }]
+                }
+            ],
+            "permission":[
+            ],
+            "prohibition":[
+        ]});
 
-        let constraint = &permission.constraints()[0];
+        let policy = serde_json::from_value::<Policy>(json.clone()).unwrap();
 
-        assert_eq!(
-            constraint,
-            &Constraint::Atomic(AtomicConstraint::new(
-                "spatial",
-                "eq",
-                "https://www.wikidata.org/resource/Q183"
-            ))
-        );
+        let serialized = serde_json::to_value(&policy).unwrap();
+
+        assert_eq!(&json, &serialized);
     }
 
     #[test]
