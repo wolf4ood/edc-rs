@@ -155,6 +155,10 @@ pub struct Policy {
     #[serde_as(deserialize_as = "OneOrMany<_, PreferMany>")]
     #[serde(rename = "permission", alias = "odrl:permission", default)]
     permissions: Vec<Permission>,
+    #[serde(rename = "obligation", alias = "odrl:obligation", default)]
+    obligations: Vec<Obligation>,
+    #[serde(rename = "prohibition", alias = "odrl:prohibition", default)]
+    prohibitions: Vec<Prohibition>,
 }
 
 impl Policy {
@@ -166,6 +170,8 @@ impl Policy {
             assigner: None,
             target: None,
             permissions: vec![],
+            obligations: vec![],
+            prohibitions: vec![],
         })
     }
 
@@ -191,6 +197,14 @@ impl Policy {
 
     pub fn permissions(&self) -> &[Permission] {
         &self.permissions
+    }
+
+    pub fn obligations(&self) -> &[Obligation] {
+        &self.obligations
+    }
+
+    pub fn prohibitions(&self) -> &[Prohibition] {
+        &self.prohibitions
     }
 }
 
@@ -255,7 +269,7 @@ pub struct Permission {
 impl Permission {
     pub fn builder() -> PermissionBuilder {
         PermissionBuilder(Permission {
-            action: Action::new("http://www.w3.org/ns/odrl/2/use".to_string()),
+            action: Action::default(),
             constraints: vec![],
         })
     }
@@ -282,7 +296,112 @@ impl PermissionBuilder {
         self
     }
 
+    pub fn action(mut self, action: Action) -> Self {
+        self.0.action = action;
+        self
+    }
+
     pub fn build(self) -> Permission {
+        self.0
+    }
+}
+
+#[serde_as]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+pub struct Obligation {
+    #[serde_as(deserialize_as = "OneOrMany<_, PreferMany>")]
+    #[serde(rename = "constraint", alias = "odrl:constraint", default)]
+    constraints: Vec<Constraint>,
+    #[serde(alias = "odrl:action")]
+    action: Action,
+}
+
+impl Obligation {
+    pub fn builder() -> ObligationBuilder {
+        ObligationBuilder(Obligation {
+            action: Action::default(),
+            constraints: vec![],
+        })
+    }
+
+    pub fn action(&self) -> &Action {
+        &self.action
+    }
+
+    pub fn constraints(&self) -> &[Constraint] {
+        &self.constraints
+    }
+}
+
+pub struct ObligationBuilder(Obligation);
+
+impl ObligationBuilder {
+    pub fn constraints(mut self, constraints: Vec<Constraint>) -> Self {
+        self.0.constraints = constraints;
+        self
+    }
+
+    pub fn action(mut self, action: Action) -> Self {
+        self.0.action = action;
+        self
+    }
+
+    pub fn constraint(mut self, constraint: Constraint) -> Self {
+        self.0.constraints.push(constraint);
+        self
+    }
+
+    pub fn build(self) -> Obligation {
+        self.0
+    }
+}
+
+#[serde_as]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+pub struct Prohibition {
+    #[serde_as(deserialize_as = "OneOrMany<_, PreferMany>")]
+    #[serde(rename = "constraint", alias = "odrl:constraint", default)]
+    constraints: Vec<Constraint>,
+    #[serde(alias = "odrl:action")]
+    action: Action,
+}
+
+impl Prohibition {
+    pub fn builder() -> ProhibitionBuilder {
+        ProhibitionBuilder(Prohibition {
+            action: Action::default(),
+            constraints: vec![],
+        })
+    }
+
+    pub fn action(&self) -> &Action {
+        &self.action
+    }
+
+    pub fn constraints(&self) -> &[Constraint] {
+        &self.constraints
+    }
+}
+
+pub struct ProhibitionBuilder(Prohibition);
+
+impl ProhibitionBuilder {
+    pub fn constraints(mut self, constraints: Vec<Constraint>) -> Self {
+        self.0.constraints = constraints;
+        self
+    }
+
+    pub fn action(mut self, action: Action) -> Self {
+        self.0.action = action;
+        self
+    }
+
+    pub fn constraint(mut self, constraint: Constraint) -> Self {
+        self.0.constraints.push(constraint);
+        self
+    }
+
+    pub fn build(self) -> Prohibition {
         self.0
     }
 }
@@ -295,6 +414,12 @@ pub enum Action {
         #[serde(rename = "@id")]
         id: String,
     },
+}
+
+impl Default for Action {
+    fn default() -> Self {
+        Action::new("http://www.w3.org/ns/odrl/2/use".to_string())
+    }
 }
 
 impl Action {
@@ -316,6 +441,25 @@ impl Action {
 #[serde(untagged)]
 pub enum Constraint {
     Atomic(AtomicConstraint),
+    MultiplicityConstraint(MultiplicityConstraint),
+}
+
+impl Constraint {
+    pub fn atomic(atomic: AtomicConstraint) -> Self {
+        Constraint::Atomic(atomic)
+    }
+
+    pub fn or(constraints: Vec<Constraint>) -> Self {
+        Constraint::MultiplicityConstraint(MultiplicityConstraint::Or(constraints))
+    }
+
+    pub fn and(constraints: Vec<Constraint>) -> Self {
+        Constraint::MultiplicityConstraint(MultiplicityConstraint::And(constraints))
+    }
+
+    pub fn xone(constraints: Vec<Constraint>) -> Self {
+        Constraint::MultiplicityConstraint(MultiplicityConstraint::Xone(constraints))
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
@@ -346,6 +490,14 @@ pub struct AtomicConstraint {
     operator: Operator,
     #[serde(rename = "rightOperand", alias = "odrl:rightOperand")]
     right_operand: PropertyValue,
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+#[serde(rename_all = "snake_case")]
+pub enum MultiplicityConstraint {
+    Or(Vec<Constraint>),
+    And(Vec<Constraint>),
+    Xone(Vec<Constraint>),
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
