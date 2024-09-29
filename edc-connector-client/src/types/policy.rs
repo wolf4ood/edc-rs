@@ -155,8 +155,10 @@ pub struct Policy {
     #[serde_as(deserialize_as = "OneOrMany<_, PreferMany>")]
     #[serde(rename = "permission", alias = "odrl:permission", default)]
     permissions: Vec<Permission>,
+    #[serde_as(deserialize_as = "OneOrMany<_, PreferMany>")]
     #[serde(rename = "obligation", alias = "odrl:obligation", default)]
     obligations: Vec<Obligation>,
+    #[serde_as(deserialize_as = "OneOrMany<_, PreferMany>")]
     #[serde(rename = "prohibition", alias = "odrl:prohibition", default)]
     prohibitions: Vec<Prohibition>,
 }
