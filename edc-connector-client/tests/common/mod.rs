@@ -9,7 +9,7 @@ use edc_connector_client::{
         contract_definition::NewContractDefinition,
         contract_negotiation::{ContractNegotiationState, ContractRequest},
         data_address::DataAddress,
-        policy::{NewPolicyDefinition, Policy, PolicyKind},
+        policy::{NewPolicyDefinition, Policy, PolicyKind, Target},
         query::Criterion,
         transfer_process::{TransferProcessState, TransferRequest},
     },
@@ -112,7 +112,7 @@ pub async fn seed_contract_negotiation(
                 .id(&offer_id)
                 .kind(PolicyKind::Offer)
                 .assigner(PROVIDER_ID)
-                .target(&asset_id)
+                .target(Target::id(&asset_id))
                 .build(),
         )
         .build()

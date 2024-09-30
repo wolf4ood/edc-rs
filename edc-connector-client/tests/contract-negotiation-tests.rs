@@ -5,7 +5,7 @@ mod initiate {
         types::{
             catalog::DatasetRequest,
             contract_negotiation::ContractRequest,
-            policy::{Policy, PolicyKind},
+            policy::{Policy, PolicyKind, Target},
         },
         Error, ManagementApiError, ManagementApiErrorDetailKind,
     };
@@ -44,7 +44,7 @@ mod initiate {
                     .kind(PolicyKind::Offer)
                     .id(&offer_id)
                     .assigner(PROVIDER_ID)
-                    .target(&asset_id)
+                    .target(Target::id(&asset_id))
                     .build(),
             )
             .build()
@@ -87,7 +87,7 @@ mod initiate {
                 Policy::builder()
                     .id(&offer_id)
                     .assigner(PROVIDER_ID)
-                    .target(&asset_id)
+                    .target(Target::id(&asset_id))
                     .build(),
             )
             .build()

@@ -154,7 +154,7 @@ pub struct Policy {
     #[serde(alias = "odrl:assigner")]
     assigner: Option<String>,
     #[serde(alias = "odrl:target")]
-    target: Option<String>,
+    target: Option<Target>,
     #[serde_as(deserialize_as = "OneOrMany<_, PreferMany>")]
     #[serde(rename = "permission", alias = "odrl:permission", default)]
     permissions: Vec<Permission>,
@@ -196,7 +196,7 @@ impl Policy {
         self.assigner.as_ref()
     }
 
-    pub fn target(&self) -> Option<&String> {
+    pub fn target(&self) -> Option<&Target> {
         self.target.as_ref()
     }
 
@@ -226,8 +226,8 @@ impl PolicyBuilder {
         self
     }
 
-    pub fn target(mut self, target: &str) -> Self {
-        self.0.target = Some(target.to_string());
+    pub fn target(mut self, target: Target) -> Self {
+        self.0.target = Some(target);
         self
     }
 
@@ -419,6 +419,35 @@ pub enum Action {
         #[serde(rename = "@id")]
         id: String,
     },
+}
+
+#[derive(Debug, Serialize, PartialEq, Clone, Deserialize)]
+#[serde(untagged)]
+pub enum Target {
+    Simple(String),
+    Id {
+        #[serde(rename = "@id")]
+        id: String,
+    },
+}
+
+impl Target {
+    pub fn simple(target: &str) -> Target {
+        Target::Simple(target.to_string())
+    }
+
+    pub fn id(target: &str) -> Target {
+        Target::Id {
+            id: target.to_string(),
+        }
+    }
+
+    pub fn get_id(&self) -> &str {
+        match self {
+            Target::Simple(target) => target,
+            Target::Id { id } => id,
+        }
+    }
 }
 
 impl Default for Action {
