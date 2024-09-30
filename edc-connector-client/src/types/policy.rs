@@ -149,8 +149,11 @@ pub struct Policy {
     id: Option<String>,
     #[serde(rename = "@type")]
     kind: PolicyKind,
+    #[serde(alias = "odrl:assignee")]
     assignee: Option<String>,
+    #[serde(alias = "odrl:assigner")]
     assigner: Option<String>,
+    #[serde(alias = "odrl:target")]
     target: Option<String>,
     #[serde_as(deserialize_as = "OneOrMany<_, PreferMany>")]
     #[serde(rename = "permission", alias = "odrl:permission", default)]

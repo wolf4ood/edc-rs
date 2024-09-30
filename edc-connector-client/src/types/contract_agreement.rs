@@ -2,7 +2,7 @@ use serde::Deserialize;
 
 use super::policy::Policy;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ContractAgreement {
     #[serde(rename = "@id")]
