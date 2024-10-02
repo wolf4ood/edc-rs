@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use super::properties::{PropertyValue, ToValue};
 
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Query {
     offset: u32,
@@ -73,7 +73,7 @@ impl QueryBuilder {
     }
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Clone, Debug)]
 pub struct Sort {
     #[serde(rename = "sortField")]
     field: String,
