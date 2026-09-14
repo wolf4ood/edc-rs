@@ -22,7 +22,9 @@ pub struct Asset {
     #[builder(default = "Asset".to_string())]
     #[serde(rename = "@type")]
     ty: String,
-    data_address: DataAddress,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[deprecated]
+    data_address: Option<DataAddress>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Builder)]
@@ -68,8 +70,8 @@ where {
         &self.private_properties
     }
 
-    pub fn data_address(&self) -> &DataAddress {
-        &self.data_address
+    pub fn data_address(&self) -> Option<&DataAddress> {
+        self.data_address.as_ref()
     }
 }
 
