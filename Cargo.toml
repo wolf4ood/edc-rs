@@ -16,3 +16,6 @@ bon = "3.8.1"
 
 [workspace.lints.clippy]
 unwrap_used = "deny"
+
+[workspace.lints.rust]
+deprecated = "allow"
