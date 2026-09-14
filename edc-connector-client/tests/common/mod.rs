@@ -11,6 +11,7 @@ use edc_connector_client::{
         contract_definition::NewContractDefinition,
         contract_negotiation::{ContractNegotiationState, ContractRequest},
         data_address::DataAddress,
+        dataplane::DataPlaneRegistrationMessage,
         participants::{NewParticipantContext, ParticipantContextConfig},
         policy::{Action, NewPolicyDefinition, Permission, Policy, PolicyKind, Target},
         query::Criterion,
@@ -66,19 +67,10 @@ pub fn consumer() -> ClientParams {
         .build()
 }
 
-pub fn provider_2025() -> ClientParams {
-    ClientParams::builder()
-        .management_url("http://localhost:29193/management".to_string())
-        .auth(Auth::ApiToken("123456".to_string()))
-        .protocol_address("http://provider-connector:9194/protocol/2025-1")
-        .protocol_id(PROVIDER_ID)
-        .build()
-}
-
 #[allow(clippy::unwrap_used)]
 pub fn consumer_virtual_edc() -> ClientParams {
     ClientParams::builder()
-        .management_url("http://localhost:39193/api/mgmt".to_string())
+        .management_url("http://localhost:39193/api/management".to_string())
         .participant_context("consumer")
         .auth(
             Auth::oauth(
@@ -90,16 +82,18 @@ pub fn consumer_virtual_edc() -> ClientParams {
             )
             .unwrap(),
         )
-        .protocol_address("http://virtual-connector:8282/api/protocol/consumer/2025-1")
+        .protocol_address(
+            "http://virtual-connector:8282/api/protocol/consumer/http-dsp-profile-2025-1",
+        )
         .protocol_id(CONSUMER_ID)
-        .protocol(Protocol::new("dataspace-protocol-http:2025-1"))
+        .protocol(Protocol::new("http-dsp-profile-2025-1"))
         .build()
 }
 
 #[allow(clippy::unwrap_used)]
 pub fn provider_virtual_edc() -> ClientParams {
     ClientParams::builder()
-        .management_url("http://localhost:39193/api/mgmt".to_string())
+        .management_url("http://localhost:39193/api/management".to_string())
         .participant_context("provider")
         .auth(
             Auth::oauth(
@@ -111,9 +105,11 @@ pub fn provider_virtual_edc() -> ClientParams {
             )
             .unwrap(),
         )
-        .protocol_address("http://virtual-connector:8282/api/protocol/provider/2025-1")
+        .protocol_address(
+            "http://virtual-connector:8282/api/protocol/provider/http-dsp-profile-2025-1",
+        )
         .protocol_id(PROVIDER_ID)
-        .protocol(Protocol::new("dataspace-protocol-http:2025-1"))
+        .protocol(Protocol::new("http-dsp-profile-2025-1"))
         .build()
 }
 
@@ -130,9 +126,10 @@ pub fn setup_provider_client_with_auth(auth: Auth) -> EdcConnectorClient {
 pub fn setup_client(params: ClientParams, version: EdcConnectorApiVersion) -> EdcConnectorClient {
     if let Some(participant_context) = params.participant_context.clone() {
         let auth = OAuth2Config::builder()
-            .client_id("provisioner")
-            .client_secret("provisioner-secret")
+            .client_id("admin")
+            .client_secret("edc-v-admin-secret")
             .token_url("http://localhost:8080/realms/edcv/protocol/openid-connect/token")
+            .scopes(vec!["management-api:admin".to_string()])
             .build();
 
         let client = EdcConnectorClient::builder()
@@ -141,7 +138,6 @@ pub fn setup_client(params: ClientParams, version: EdcConnectorApiVersion) -> Ed
             .participant_context(participant_context.clone())
             .build()
             .unwrap();
-
         thread::spawn(move || {
             tokio::runtime::Builder::new_current_thread()
                 .enable_all()
@@ -157,6 +153,14 @@ pub fn setup_client(params: ClientParams, version: EdcConnectorApiVersion) -> Ed
                                 .build(),
                         )
                         .await;
+
+                    register_dataplane_with_transfer_type(
+                        &client,
+                        version,
+                        &params.protocol_id,
+                        "HttpData-PULL",
+                    )
+                    .await;
 
                     let mut entries = HashMap::new();
 
@@ -177,19 +181,104 @@ pub fn setup_client(params: ClientParams, version: EdcConnectorApiVersion) -> Ed
         })
         .join()
         .unwrap();
+    } else {
+        let client = EdcConnectorClient::builder()
+            .management_url(&params.management_url)
+            .with_auth(params.auth.clone())
+            .build()
+            .unwrap();
+        thread::spawn(move || {
+            tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .unwrap()
+                .block_on(async {
+                    register_dataplane_with_transfer_type(
+                        &client,
+                        version,
+                        &params.protocol_id,
+                        "HttpData-PULL",
+                    )
+                    .await;
+                });
+        })
+        .join()
+        .unwrap();
     }
 
     EdcConnectorClient::builder()
         .management_url(&params.management_url)
-        .with_auth(Auth::api_token("123456"))
         .with_auth(params.auth)
         .maybe_participant_context(params.participant_context)
         .build()
         .unwrap()
 }
 
+/// Address of the `signaling-mock` data plane as seen *from the connectors*,
+/// i.e. its compose service alias. The image sets `MOCK_PORT=8080`, which takes
+/// precedence over `port` in `testing/conf/dataplane.config/mock.toml`. No host
+/// port is published, so tests can only hand this address over, not call it.
+pub const DATAPLANE_ENDPOINT: &str = "http://dataplane:8080/api/v1/dataflows";
+
+/// A transfer type unique to the calling test, so that a data plane registered
+/// for it can never be selected for the real transfers driven by the other
+/// tests against the same connector.
+pub fn new_transfer_type() -> String {
+    format!("MockData-{}-PULL", Uuid::new_v4())
+}
+
+pub fn new_dataplane_registration(id: &str, transfer_type: &str) -> DataPlaneRegistrationMessage {
+    DataPlaneRegistrationMessage::builder()
+        .dataplane_id(id)
+        .endpoint(DATAPLANE_ENDPOINT)
+        .transfer_type(transfer_type)
+        .build()
+}
+
+/// Registers the mock data plane under a fresh id and transfer type, returning
+/// both so the test can assert on them and unregister afterwards.
 #[allow(clippy::unwrap_used)]
-pub async fn seed(client: &EdcConnectorClient) -> (String, String, String) {
+pub async fn register_dataplane(
+    client: &EdcConnectorClient,
+    version: EdcConnectorApiVersion,
+) -> (String, String) {
+    let transfer_type = new_transfer_type();
+    let id = Uuid::new_v4().to_string();
+
+    register_dataplane_with_transfer_type(client, version, &id, &transfer_type).await;
+    (id, transfer_type)
+}
+
+/// Registers the mock data plane under a fresh id and transfer type, returning
+/// both so the test can assert on them and unregister afterwards.
+#[allow(clippy::unwrap_used)]
+pub async fn register_dataplane_with_transfer_type(
+    client: &EdcConnectorClient,
+    version: EdcConnectorApiVersion,
+    id: &str,
+    transfer_type: &str,
+) {
+    client
+        .data_planes(version)
+        .register(&new_dataplane_registration(&id, transfer_type))
+        .await
+        .unwrap();
+}
+
+#[allow(clippy::unwrap_used)]
+pub async fn unregister_dataplane(
+    client: &EdcConnectorClient,
+    version: EdcConnectorApiVersion,
+    id: &str,
+) {
+    client.data_planes(version).delete(id).await.unwrap();
+}
+
+#[allow(clippy::unwrap_used)]
+pub async fn seed(
+    client: &EdcConnectorClient,
+    version: EdcConnectorApiVersion,
+) -> (String, String, String) {
     let asset = NewAsset::builder()
         .id(Uuid::new_v4().to_string().as_str())
         .data_address(
@@ -201,11 +290,7 @@ pub async fn seed(client: &EdcConnectorClient) -> (String, String, String) {
         )
         .build();
 
-    let asset_response = client
-        .assets(EdcConnectorApiVersion::V4)
-        .create(&asset)
-        .await
-        .unwrap();
+    let asset_response = client.assets(version).create(&asset).await.unwrap();
 
     let policy_definition = NewPolicyDefinition::builder()
         .id(Uuid::new_v4().to_string().as_str())
@@ -217,7 +302,7 @@ pub async fn seed(client: &EdcConnectorClient) -> (String, String, String) {
         .build();
 
     let policy_response = client
-        .policies(EdcConnectorApiVersion::V4)
+        .policies(version)
         .create(&policy_definition)
         .await
         .unwrap();
@@ -234,7 +319,7 @@ pub async fn seed(client: &EdcConnectorClient) -> (String, String, String) {
         .build();
 
     let definition_response = client
-        .contract_definitions(EdcConnectorApiVersion::V4)
+        .contract_definitions(version)
         .create(&contract_definition)
         .await
         .unwrap();
@@ -252,8 +337,9 @@ pub async fn seed_contract_negotiation(
     consumer_cfg: &ClientParams,
     provider: &EdcConnectorClient,
     provider_cfg: &ClientParams,
+    version: EdcConnectorApiVersion,
 ) -> (String, String) {
-    let (asset_id, _, _) = seed(provider).await;
+    let (asset_id, _, _) = seed(provider, version).await;
 
     let dataset_request = DatasetRequest::builder()
         .counter_party_address(&provider_cfg.protocol_address)
@@ -263,7 +349,7 @@ pub async fn seed_contract_negotiation(
         .build();
 
     let dataset = consumer
-        .catalogue(EdcConnectorApiVersion::V4)
+        .catalogue(version)
         .dataset::<CatalogExtraFields>(&dataset_request)
         .await
         .unwrap();
@@ -286,7 +372,7 @@ pub async fn seed_contract_negotiation(
         .build();
 
     let response = consumer
-        .contract_negotiations(EdcConnectorApiVersion::V4)
+        .contract_negotiations(version)
         .initiate(&request)
         .await
         .unwrap();
@@ -300,19 +386,21 @@ pub async fn seed_contract_agreement(
     consumer_cfg: &ClientParams,
     provider: &EdcConnectorClient,
     provider_cfg: &ClientParams,
+    version: EdcConnectorApiVersion,
 ) -> (String, String, String) {
     let (contract_negotiation_id, asset_id) =
-        seed_contract_negotiation(consumer, consumer_cfg, provider, provider_cfg).await;
+        seed_contract_negotiation(consumer, consumer_cfg, provider, provider_cfg, version).await;
 
     wait_for_negotiation_state(
         consumer,
         &contract_negotiation_id,
         ContractNegotiationState::Finalized,
+        version,
     )
     .await;
 
     let agreement_id = consumer
-        .contract_negotiations(EdcConnectorApiVersion::V4)
+        .contract_negotiations(version)
         .get(&contract_negotiation_id)
         .await
         .map(|cn| cn.contract_agreement_id().cloned())
@@ -320,7 +408,7 @@ pub async fn seed_contract_agreement(
         .unwrap();
 
     let contract_agreement = consumer
-        .contract_agreements(EdcConnectorApiVersion::V4)
+        .contract_agreements(version)
         .get(&agreement_id)
         .await
         .unwrap();
@@ -338,19 +426,21 @@ pub async fn seed_transfer_process(
     consumer_cfg: &ClientParams,
     provider: &EdcConnectorClient,
     provider_cfg: &ClientParams,
+    version: EdcConnectorApiVersion,
 ) -> (String, String, String, String) {
     let (contract_negotiation_id, asset_id) =
-        seed_contract_negotiation(consumer, consumer_cfg, provider, provider_cfg).await;
+        seed_contract_negotiation(consumer, consumer_cfg, provider, provider_cfg, version).await;
 
     wait_for_negotiation_state(
         consumer,
         &contract_negotiation_id,
         ContractNegotiationState::Finalized,
+        version,
     )
     .await;
 
     let agreement_id = consumer
-        .contract_negotiations(EdcConnectorApiVersion::V4)
+        .contract_negotiations(version)
         .get(&contract_negotiation_id)
         .await
         .map(|cn| cn.contract_agreement_id().cloned())
@@ -358,7 +448,7 @@ pub async fn seed_transfer_process(
         .unwrap();
 
     let contract_agreement = consumer
-        .contract_agreements(EdcConnectorApiVersion::V4)
+        .contract_agreements(version)
         .get(&agreement_id)
         .await
         .unwrap();
@@ -371,7 +461,7 @@ pub async fn seed_transfer_process(
         .build();
 
     let response = consumer
-        .transfer_processes(EdcConnectorApiVersion::V4)
+        .transfer_processes(version)
         .initiate(&request)
         .await
         .unwrap();
@@ -389,12 +479,13 @@ pub async fn wait_for_negotiation_state(
     client: &EdcConnectorClient,
     id: &str,
     state: ContractNegotiationState,
+    version: EdcConnectorApiVersion,
 ) {
     wait_for(|| {
         let i_state = state.clone();
         async {
             client
-                .contract_negotiations(EdcConnectorApiVersion::V4)
+                .contract_negotiations(version)
                 .get_state(id)
                 .await
                 .map_err(|err| err.to_string())
@@ -416,12 +507,13 @@ pub async fn wait_for_transfer_state(
     client: &EdcConnectorClient,
     id: &str,
     state: TransferProcessState,
+    version: EdcConnectorApiVersion,
 ) {
     wait_for(|| {
         let i_state = state.clone();
         async {
             client
-                .transfer_processes(EdcConnectorApiVersion::V4)
+                .transfer_processes(version)
                 .get_state(id)
                 .await
                 .map_err(|err| err.to_string())

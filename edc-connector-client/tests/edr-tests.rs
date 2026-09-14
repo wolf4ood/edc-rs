@@ -8,7 +8,6 @@ mod get {
     use rstest::rstest;
 
     #[rstest]
-    #[case(consumer(), provider(), EdcConnectorApiVersion::V3)]
     #[case(consumer(), provider(), EdcConnectorApiVersion::V4)]
     #[tokio::test]
     #[ignore]
@@ -21,12 +20,14 @@ mod get {
         let consumer = setup_client(consumer_cfg.clone(), version);
 
         let (transfer_process_id, agreement_id, _, asset_id) =
-            seed_transfer_process(&consumer, &consumer_cfg, &provider, &provider_cfg).await;
+            seed_transfer_process(&consumer, &consumer_cfg, &provider, &provider_cfg, version)
+                .await;
 
         wait_for_transfer_state(
             &consumer,
             &transfer_process_id,
             TransferProcessState::Started,
+            version,
         )
         .await;
 
@@ -49,7 +50,6 @@ mod query {
     use rstest::rstest;
 
     #[rstest]
-    #[case(consumer(), provider(), EdcConnectorApiVersion::V3)]
     #[case(consumer(), provider(), EdcConnectorApiVersion::V4)]
     #[tokio::test]
     #[ignore]
@@ -62,12 +62,14 @@ mod query {
         let consumer = setup_client(consumer_cfg.clone(), version);
 
         let (transfer_process_id, _, _, asset_id) =
-            seed_transfer_process(&consumer, &consumer_cfg, &provider, &provider_cfg).await;
+            seed_transfer_process(&consumer, &consumer_cfg, &provider, &provider_cfg, version)
+                .await;
 
         wait_for_transfer_state(
             &consumer,
             &transfer_process_id,
             TransferProcessState::Started,
+            version,
         )
         .await;
 
@@ -100,7 +102,6 @@ mod delete {
     use crate::common::{seed_transfer_process, wait_for};
 
     #[rstest]
-    #[case(consumer(), provider(), EdcConnectorApiVersion::V3)]
     #[case(consumer(), provider(), EdcConnectorApiVersion::V4)]
     #[tokio::test]
     #[ignore]
@@ -113,12 +114,14 @@ mod delete {
         let consumer = setup_client(consumer_cfg.clone(), version);
 
         let (transfer_process_id, _, _, _) =
-            seed_transfer_process(&consumer, &consumer_cfg, &provider, &provider_cfg).await;
+            seed_transfer_process(&consumer, &consumer_cfg, &provider, &provider_cfg, version)
+                .await;
 
         wait_for_transfer_state(
             &consumer,
             &transfer_process_id,
             TransferProcessState::Started,
+            version,
         )
         .await;
 

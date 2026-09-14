@@ -14,7 +14,6 @@ mod secrets {
         use crate::common::{provider, setup_client, ClientParams};
 
         #[rstest]
-        #[case(provider(), EdcConnectorApiVersion::V3)]
         #[case(provider(), EdcConnectorApiVersion::V4)]
         #[tokio::test]
         async fn should_create_a_secret(
@@ -34,7 +33,6 @@ mod secrets {
         }
 
         #[rstest]
-        #[case(provider(), EdcConnectorApiVersion::V3)]
         #[case(provider(), EdcConnectorApiVersion::V4)]
         #[tokio::test]
         async fn should_failt_to_create_a_secret_when_existing(
@@ -76,7 +74,6 @@ mod secrets {
         use crate::common::{provider, setup_client, ClientParams};
 
         #[rstest]
-        #[case(provider(), EdcConnectorApiVersion::V3)]
         #[case(provider(), EdcConnectorApiVersion::V4)]
         #[tokio::test]
         async fn should_delete_an_secret(
@@ -96,7 +93,6 @@ mod secrets {
         }
 
         #[rstest]
-        #[case(provider(), EdcConnectorApiVersion::V3)]
         #[case(provider(), EdcConnectorApiVersion::V4)]
         #[tokio::test]
         async fn should_fail_to_delete_a_secret_when_not_existing(
@@ -130,7 +126,6 @@ mod secrets {
         use crate::common::{provider, setup_client, ClientParams};
 
         #[rstest]
-        #[case(provider(), EdcConnectorApiVersion::V3)]
         #[case(provider(), EdcConnectorApiVersion::V4)]
         #[tokio::test]
         async fn should_get_a_secret(
@@ -149,7 +144,6 @@ mod secrets {
         }
 
         #[rstest]
-        #[case(provider(), EdcConnectorApiVersion::V3)]
         #[case(provider(), EdcConnectorApiVersion::V4)]
         #[tokio::test]
         async fn should_fail_to_get_a_secret_when_not_existing(
@@ -183,7 +177,6 @@ mod secrets {
         use crate::common::{provider, setup_client, ClientParams};
 
         #[rstest]
-        #[case(provider(), EdcConnectorApiVersion::V3)]
         #[case(provider(), EdcConnectorApiVersion::V4)]
         #[tokio::test]
         async fn should_update_a_secret(
@@ -210,7 +203,6 @@ mod secrets {
         }
 
         #[rstest]
-        #[case(provider(), EdcConnectorApiVersion::V3)]
         #[case(provider(), EdcConnectorApiVersion::V4)]
         #[tokio::test]
         async fn should_fail_to_update_a_secret_when_not_existing(

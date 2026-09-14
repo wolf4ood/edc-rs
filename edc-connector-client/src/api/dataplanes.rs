@@ -1,6 +1,9 @@
 use crate::{
     client::EdcConnectorClientInternal,
-    types::{context::WithContext, dataplane::DataPlaneInstance},
+    types::{
+        context::WithContext,
+        dataplane::{DataPlaneInstance, DataPlaneRegistrationMessage},
+    },
     EdcConnectorApiVersion, EdcResult,
 };
 
@@ -17,6 +20,18 @@ impl<'a> DataPlaneApi<'a> {
         version: EdcConnectorApiVersion,
     ) -> DataPlaneApi<'a> {
         DataPlaneApi { client, version }
+    }
+
+    /// Registers a data plane, or updates it when one with the same id is
+    /// already registered.
+    pub async fn register(&self, registration: &DataPlaneRegistrationMessage) -> EdcResult<()> {
+        let url = self.client.path_for(self.version, &[DATAPLANES_PATH]);
+        self.client.put(url, registration).await
+    }
+
+    pub async fn delete(&self, id: &str) -> EdcResult<()> {
+        let url = self.client.path_for(self.version, &[DATAPLANES_PATH, id]);
+        self.client.del(url).await
     }
 
     pub async fn list(&self) -> EdcResult<Vec<DataPlaneInstance>> {

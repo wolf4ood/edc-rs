@@ -37,6 +37,7 @@ impl<S: transfer_request_builder::State> TransferRequestBuilder<S> {
         self
     }
 
+    #[deprecated]
     pub fn destination(mut self, data_destination: DataAddress) -> Self {
         self.data_destination = Some(data_destination);
         self
@@ -100,6 +101,7 @@ impl TransferProcess {
         self.correlation_id.as_ref()
     }
 
+    #[deprecated]
     pub fn data_destination(&self) -> Option<&DataAddress> {
         self.data_destination.as_ref()
     }

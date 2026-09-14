@@ -13,9 +13,8 @@ mod contract_definition {
         use crate::common::{provider, provider_virtual_edc, setup_client, ClientParams};
 
         #[rstest]
-        #[case(provider(), EdcConnectorApiVersion::V3)]
         #[case(provider(), EdcConnectorApiVersion::V4)]
-        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V4)]
+        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
         #[tokio::test]
         async fn should_create_a_contract_definition(
             #[case] provider: ClientParams,
@@ -42,11 +41,10 @@ mod contract_definition {
         }
 
         #[rstest]
-        #[case(provider(), EdcConnectorApiVersion::V3)]
         #[case(provider(), EdcConnectorApiVersion::V4)]
-        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V4)]
+        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
         #[tokio::test]
-        async fn should_failt_to_create_a_contract_definition_when_existing(
+        async fn should_fail_to_create_a_contract_definition_when_existing(
             #[case] provider: ClientParams,
             #[case] version: EdcConnectorApiVersion,
         ) {
@@ -96,9 +94,8 @@ mod contract_definition {
         use crate::common::{provider, provider_virtual_edc, setup_client, ClientParams};
 
         #[rstest]
-        #[case(provider(), EdcConnectorApiVersion::V3)]
         #[case(provider(), EdcConnectorApiVersion::V4)]
-        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V4)]
+        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
         #[tokio::test]
         async fn should_delete_a_contract_definition(
             #[case] provider: ClientParams,
@@ -128,9 +125,8 @@ mod contract_definition {
         }
 
         #[rstest]
-        #[case(provider(), EdcConnectorApiVersion::V3)]
         #[case(provider(), EdcConnectorApiVersion::V4)]
-        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V4)]
+        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
         #[tokio::test]
         async fn should_fail_to_delete_policy_definition_when_not_existing(
             #[case] provider: ClientParams,
@@ -163,9 +159,8 @@ mod contract_definition {
         use crate::common::{provider, provider_virtual_edc, setup_client, ClientParams};
 
         #[rstest]
-        #[case(provider(), EdcConnectorApiVersion::V3)]
         #[case(provider(), EdcConnectorApiVersion::V4)]
-        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V4)]
+        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
         #[tokio::test]
         async fn should_get_a_contract_definition(
             #[case] provider: ClientParams,
@@ -197,9 +192,8 @@ mod contract_definition {
         }
 
         #[rstest]
-        #[case(provider(), EdcConnectorApiVersion::V3)]
         #[case(provider(), EdcConnectorApiVersion::V4)]
-        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V4)]
+        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
         #[tokio::test]
         async fn should_fail_to_get_a_policy_definition_when_not_existing(
             #[case] provider: ClientParams,
@@ -232,9 +226,8 @@ mod contract_definition {
         use crate::common::{provider, provider_virtual_edc, setup_client, ClientParams};
 
         #[rstest]
-        #[case(provider(), EdcConnectorApiVersion::V3)]
         #[case(provider(), EdcConnectorApiVersion::V4)]
-        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V4)]
+        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
         #[tokio::test]
         async fn should_update_policy_definition(
             #[case] provider: ClientParams,
@@ -272,9 +265,8 @@ mod contract_definition {
         }
 
         #[rstest]
-        #[case(provider(), EdcConnectorApiVersion::V3)]
         #[case(provider(), EdcConnectorApiVersion::V4)]
-        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V4)]
+        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
         #[tokio::test]
         async fn should_fail_to_update_an_contract_definition_when_not_existing(
             #[case] provider: ClientParams,
@@ -314,9 +306,8 @@ mod contract_definition {
         use uuid::Uuid;
 
         #[rstest]
-        #[case(provider(), EdcConnectorApiVersion::V3)]
         #[case(provider(), EdcConnectorApiVersion::V4)]
-        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V4)]
+        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
         #[tokio::test]
         async fn should_query_contract_definitions(
             #[case] provider: ClientParams,

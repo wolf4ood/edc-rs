@@ -12,12 +12,11 @@ mod contract_agreements {
         use rstest::rstest;
 
         #[rstest]
-        #[case(consumer(), provider(), EdcConnectorApiVersion::V3)]
         #[case(consumer(), provider(), EdcConnectorApiVersion::V4)]
         #[case(
             consumer_virtual_edc(),
             provider_virtual_edc(),
-            EdcConnectorApiVersion::V4
+            EdcConnectorApiVersion::V5
         )]
         #[tokio::test]
         async fn should_get_a_contract_agreement(
@@ -28,13 +27,20 @@ mod contract_agreements {
             let provider = setup_client(provider_cfg.clone(), version);
             let consumer = setup_client(consumer_cfg.clone(), version);
 
-            let (contract_negotiation_id, _) =
-                seed_contract_negotiation(&consumer, &consumer_cfg, &provider, &provider_cfg).await;
+            let (contract_negotiation_id, _) = seed_contract_negotiation(
+                &consumer,
+                &consumer_cfg,
+                &provider,
+                &provider_cfg,
+                version,
+            )
+            .await;
 
             wait_for_negotiation_state(
                 &consumer,
                 &contract_negotiation_id,
                 ContractNegotiationState::Finalized,
+                version,
             )
             .await;
 
@@ -68,12 +74,11 @@ mod contract_agreements {
         use rstest::rstest;
 
         #[rstest]
-        #[case(consumer(), provider(), EdcConnectorApiVersion::V3)]
         #[case(consumer(), provider(), EdcConnectorApiVersion::V4)]
         #[case(
             consumer_virtual_edc(),
             provider_virtual_edc(),
-            EdcConnectorApiVersion::V4
+            EdcConnectorApiVersion::V5
         )]
         #[tokio::test]
         async fn should_query_contract_agreements(
@@ -84,13 +89,20 @@ mod contract_agreements {
             let provider = setup_client(provider_cfg.clone(), version);
             let consumer = setup_client(consumer_cfg.clone(), version);
 
-            let (contract_negotiation_id, asset_id) =
-                seed_contract_negotiation(&consumer, &consumer_cfg, &provider, &provider_cfg).await;
+            let (contract_negotiation_id, asset_id) = seed_contract_negotiation(
+                &consumer,
+                &consumer_cfg,
+                &provider,
+                &provider_cfg,
+                version,
+            )
+            .await;
 
             wait_for_negotiation_state(
                 &consumer,
                 &contract_negotiation_id,
                 ContractNegotiationState::Finalized,
+                version,
             )
             .await;
 

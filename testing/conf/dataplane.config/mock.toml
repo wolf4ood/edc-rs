@@ -1,0 +1,73 @@
+# Sample configuration for the mock data plane.
+# Precedence: CLI flag > MOCK_* environment variable > this file > built-in default.
+
+[server]
+bind = "0.0.0.0"
+port = 8081
+# URL under which consumers reach this mock (used by {{public_base_url}}).
+# Defaults to http://localhost:{port} when omitted.
+public_base_url = "http://localhost:8080"
+
+[participant]
+id = "mock-participant"
+
+[control_plane]
+id = "mock-control-plane"
+# Only used for asynchronous callbacks, which this mock does not send yet.
+url = "http://localhost:9999/api/v1/callback"
+
+[flow]
+# Profiles accepted on /start and /prepare. Empty = accept everything. A trailing '*' is a wildcard.
+accepted_profiles = []
+# Answer /prepare (consumer side) with PREPARED.
+accept_prepare = true
+# Issue a new token/address on /resume instead of re-emitting the existing one.
+rotate_token_on_resume = false
+
+# Default DataAddress returned in the synchronous /start response.
+# Available placeholders: {{dataFlowId}} {{datasetId}} {{agreementId}} {{participantId}}
+# {{counterPartyId}} {{dataspaceContext}} {{profile}} {{participantContextId}} {{controlPlaneId}}
+# {{token}} (= {{random_token}}) {{uuid}} {{public_base_url}} {{metadata.<key>}} {{claims.<key>}}
+[data_address]
+endpoint_type = "https://w3id.org/idsa/v4.1/HTTP"
+endpoint = "{{public_base_url}}/public/{{dataFlowId}}"
+properties = [
+  { name = "endpoint",      value = "{{public_base_url}}/public/{{dataFlowId}}" },
+  { name = "authorization", value = "{{token}}" },
+  { name = "authType",      value = "bearer" },
+]
+
+# Rules are evaluated in order; the first whose `match` fields all match wins.
+# Fields set under `address` replace the default; `properties` replaces the whole list.
+[[rules]]
+name = "edc-style"
+match = { profile = "HttpData-PULL" }
+[rules.address]
+endpoint_type = "HTTP"
+properties = [
+  { name = "endpoint",     value = "{{public_base_url}}/public/{{dataFlowId}}" },
+  { name = "access_token", value = "{{token}}" },
+  { name = "token_type",   value = "Bearer" },
+]
+
+[[rules]]
+name = "special-dataset"
+match = { dataset_id = "dataset-42", labels = ["gold"] }
+[rules.address]
+endpoint = "https://external.example.org/data/{{datasetId}}?agreement={{agreementId}}"
+properties = [
+  { name = "authorization", value = "{{token}}" },
+  { name = "authType",      value = "bearer" },
+  { name = "x-region",      value = "{{metadata.region}}" },
+]
+
+# What GET /public/{dataFlowId} returns once the flow is STARTED and the token matches.
+[public]
+content_type = "application/json"
+body = '{"dataFlowId":"{{dataFlowId}}","datasetId":"{{datasetId}}","agreementId":"{{agreementId}}","payload":"hello from the mock"}'
+# body_file = "payload.json"   # relative to this file; replaces `body`
+status = 200
+extra_headers = [ { name = "x-mock-flow", value = "{{dataFlowId}}" } ]
+
+[log]
+filter = "info,signaling_mock_rs=debug,tower_http=info"

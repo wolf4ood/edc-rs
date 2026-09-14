@@ -4,6 +4,7 @@ pub enum EdcConnectorApiVersion {
     V4Alpha,
     V4,
     V5Beta,
+    V5,
 }
 
 impl EdcConnectorApiVersion {
@@ -13,6 +14,7 @@ impl EdcConnectorApiVersion {
             Self::V4Alpha => "v4alpha",
             Self::V4 => "v4",
             Self::V5Beta => "v5beta",
+            Self::V5 => "v5",
         }
     }
 }

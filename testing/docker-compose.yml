@@ -1,6 +1,6 @@
 services:
   consumer-connector:
-    image: ${CONNECTOR_IMAGE:-ghcr.io/dataspace-rs/connector:0.17.0}
+    image: ${CONNECTOR_IMAGE:-ghcr.io/dataspace-rs/controlplane:1.0.0-rc1}
     ports:
       - "19191:9191" # connector default
       - "19192:9192" # connector control
@@ -20,7 +20,7 @@ services:
       - "host.docker.internal:host-gateway"
 
   provider-connector:
-    image: ${CONNECTOR_IMAGE:-ghcr.io/dataspace-rs/connector:0.17.0}
+    image: ${CONNECTOR_IMAGE:-ghcr.io/dataspace-rs/controlplane:1.0.0-rc1}
     ports:
       - "29191:9191" # connector default
       - "29192:9192" # connector control
@@ -39,16 +39,24 @@ services:
       - "host.docker.internal:host-gateway"
 
   virtual-connector:
-    image: ${VIRTUAL_CONNECTOR_IMAGE:-ghcr.io/dataspace-rs/virtual-connector:0.17.0}
+    image: ${VIRTUAL_CONNECTOR_IMAGE:-ghcr.io/dataspace-rs/virtual-controlplane:1.0.0-rc1}
     ports:
-      - "39193:8081" # connector management
+      - "39193:8181" # connector management
       - "1046:1044" # data-plane public
     environment:
       EDC_IAM_OAUTH2_ISSUER: "http://localhost:8080/realms/edcv"
       EDC_IAM_OAUTH2_JWKS_URL: "http://keycloak:8080/realms/edcv/protocol/openid-connect/certs"
       EDC_POLICY_VALIDATION_ENABLED: "false"
-      EDC_DSP_CALLBACK_ADDRESS: "http://virtual-connector:8282/api/protocol"
+      EDC_DSP_CALLBACK_ADDRESS: "http://virtual-connector:8282/api/protocol/%s"
       WEB_HTTP_PORT: 8888
+      EDC_DATASPACE_ENABLE_PROFILES_ALL: "true"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  dataplane:
+    image: ${DATAPLANE_IMAGE:-ghcr.io/dataspace-rs/signaling-mock-rs:main}
+    volumes:
+    - ./conf/dataplane.config/mock.toml:/etc/signaling-mock/mock.toml:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
 

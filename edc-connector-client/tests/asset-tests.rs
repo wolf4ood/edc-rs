@@ -15,9 +15,8 @@ mod assets {
         use crate::common::{provider, provider_virtual_edc, setup_client, ClientParams};
 
         #[rstest]
-        #[case(provider(), EdcConnectorApiVersion::V3)]
         #[case(provider(), EdcConnectorApiVersion::V4)]
-        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V4)]
+        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
         #[tokio::test]
         async fn should_create_an_asset(
             #[case] provider: ClientParams,
@@ -40,11 +39,10 @@ mod assets {
         }
 
         #[rstest]
-        #[case(provider(), EdcConnectorApiVersion::V3)]
         #[case(provider(), EdcConnectorApiVersion::V4)]
-        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V4)]
+        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
         #[tokio::test]
-        async fn should_failt_to_create_an_asset_when_existing(
+        async fn should_fail_to_create_an_asset_when_existing(
             #[case] provider: ClientParams,
             #[case] version: EdcConnectorApiVersion,
         ) {
@@ -87,9 +85,8 @@ mod assets {
         use crate::common::{provider, provider_virtual_edc, setup_client, ClientParams};
 
         #[rstest]
-        #[case(provider(), EdcConnectorApiVersion::V3)]
         #[case(provider(), EdcConnectorApiVersion::V4)]
-        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V4)]
+        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
         #[tokio::test]
         async fn should_delete_an_asset(
             #[case] provider: ClientParams,
@@ -111,9 +108,8 @@ mod assets {
         }
 
         #[rstest]
-        #[case(provider(), EdcConnectorApiVersion::V3)]
         #[case(provider(), EdcConnectorApiVersion::V4)]
-        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V4)]
+        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
         #[tokio::test]
         async fn should_fail_to_delete_an_asset_when_not_existing(
             #[case] provider: ClientParams,
@@ -147,9 +143,8 @@ mod assets {
         use crate::common::{provider, provider_virtual_edc, setup_client, ClientParams};
 
         #[rstest]
-        #[case(provider(), EdcConnectorApiVersion::V3)]
         #[case(provider(), EdcConnectorApiVersion::V4)]
-        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V4)]
+        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
         #[tokio::test]
         async fn should_get_an_asset(
             #[case] provider: ClientParams,
@@ -171,9 +166,8 @@ mod assets {
         }
 
         #[rstest]
-        #[case(provider(), EdcConnectorApiVersion::V3)]
         #[case(provider(), EdcConnectorApiVersion::V4)]
-        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V4)]
+        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
         #[tokio::test]
         async fn should_get_an_asset_with_array_property(
             #[case] provider: ClientParams,
@@ -212,9 +206,8 @@ mod assets {
         }
 
         #[rstest]
-        #[case(provider(), EdcConnectorApiVersion::V3)]
         #[case(provider(), EdcConnectorApiVersion::V4)]
-        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V4)]
+        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
         #[tokio::test]
         async fn should_fail_to_get_an_asset_when_not_existing(
             #[case] provider: ClientParams,
@@ -250,9 +243,8 @@ mod assets {
         use crate::common::{provider, provider_virtual_edc, setup_client, ClientParams};
 
         #[rstest]
-        #[case(provider(), EdcConnectorApiVersion::V3)]
         #[case(provider(), EdcConnectorApiVersion::V4)]
-        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V4)]
+        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
         #[tokio::test]
         async fn should_update_an_asset(
             #[case] provider: ClientParams,
@@ -282,9 +274,8 @@ mod assets {
         }
 
         #[rstest]
-        #[case(provider(), EdcConnectorApiVersion::V3)]
         #[case(provider(), EdcConnectorApiVersion::V4)]
-        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V4)]
+        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
         #[tokio::test]
         async fn should_fail_to_update_an_asset_when_not_existing(
             #[case] provider: ClientParams,
@@ -326,9 +317,8 @@ mod assets {
         use crate::common::{provider, provider_virtual_edc, setup_client, ClientParams};
 
         #[rstest]
-        #[case(provider(), EdcConnectorApiVersion::V3)]
         #[case(provider(), EdcConnectorApiVersion::V4)]
-        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V4)]
+        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
         #[tokio::test]
         async fn should_query_an_asset(
             #[case] provider: ClientParams,
@@ -369,9 +359,8 @@ mod assets {
         }
 
         #[rstest]
-        #[case(provider(), EdcConnectorApiVersion::V3)]
         #[case(provider(), EdcConnectorApiVersion::V4)]
-        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V4)]
+        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
         #[tokio::test]
         async fn should_query_an_asset_with_sort(
             #[case] provider: ClientParams,
@@ -414,9 +403,8 @@ mod assets {
         }
 
         #[rstest]
-        #[case(provider(), EdcConnectorApiVersion::V3)]
         #[case(provider(), EdcConnectorApiVersion::V4)]
-        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V4)]
+        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
         #[tokio::test]
         async fn should_query_an_asset_with_limit(
             #[case] provider: ClientParams,

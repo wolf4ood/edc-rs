@@ -1,21 +1,188 @@
 mod common;
 
+#[allow(clippy::unwrap_used)]
 mod dataplane {
-    use crate::common::{provider, setup_client, ClientParams};
-    use edc_connector_client::EdcConnectorApiVersion;
-    use rstest::rstest;
 
-    #[rstest]
-    #[case(provider(), EdcConnectorApiVersion::V3)]
-    #[case(provider(), EdcConnectorApiVersion::V4)]
-    #[tokio::test]
-    async fn should_fetch_dataplanes(
-        #[case] provider: ClientParams,
-        #[case] version: EdcConnectorApiVersion,
-    ) {
-        let client = setup_client(provider, version);
+    // Only V4 connectors expose a data plane list: the virtual connector ships
+    // the registration API but no data plane selector API.
+    mod list {
+        use crate::common::{
+            provider, register_dataplane, setup_client, unregister_dataplane, ClientParams,
+            DATAPLANE_ENDPOINT,
+        };
+        use edc_connector_client::EdcConnectorApiVersion;
+        use rstest::rstest;
 
-        let response = client.data_planes(version).list().await.unwrap();
-        assert!(!response.is_empty());
+        #[rstest]
+        #[case(provider(), EdcConnectorApiVersion::V4)]
+        #[tokio::test]
+        async fn should_fetch_dataplanes(
+            #[case] provider: ClientParams,
+            #[case] version: EdcConnectorApiVersion,
+        ) {
+            let client = setup_client(provider, version);
+
+            // Nothing registers a data plane with the test connectors on
+            // startup, so the list is only non-empty once we put one there.
+            let (id, transfer_type) = register_dataplane(&client, version).await;
+
+            let response = client.data_planes(version).list().await.unwrap();
+
+            assert!(!response.is_empty());
+
+            let registered = response.iter().find(|dp| dp.id() == id).unwrap();
+            assert_eq!(registered.url(), DATAPLANE_ENDPOINT);
+            assert!(registered.allowed_transfer_types().contains(&transfer_type));
+
+            unregister_dataplane(&client, version, &id).await;
+        }
+    }
+
+    mod register {
+        use edc_connector_client::{
+            types::dataplane::{DataPlaneAuthorization, DataPlaneRegistrationMessage},
+            EdcConnectorApiVersion,
+        };
+        use rstest::rstest;
+        use uuid::Uuid;
+
+        use crate::common::{
+            new_dataplane_registration, new_transfer_type, provider, provider_virtual_edc,
+            register_dataplane, setup_client, unregister_dataplane, ClientParams,
+            DATAPLANE_ENDPOINT,
+        };
+
+        #[rstest]
+        #[case(provider(), EdcConnectorApiVersion::V4)]
+        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
+        #[tokio::test]
+        async fn should_register_a_dataplane(
+            #[case] provider: ClientParams,
+            #[case] version: EdcConnectorApiVersion,
+        ) {
+            let client = setup_client(provider, version);
+
+            let (id, _) = register_dataplane(&client, version).await;
+
+            unregister_dataplane(&client, version, &id).await;
+        }
+
+        #[rstest]
+        #[case(provider(), EdcConnectorApiVersion::V4)]
+        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
+        #[tokio::test]
+        async fn should_register_a_dataplane_with_an_authorization_profile(
+            #[case] provider: ClientParams,
+            #[case] version: EdcConnectorApiVersion,
+        ) {
+            let client = setup_client(provider, version);
+            let id = Uuid::new_v4().to_string();
+
+            let registration = DataPlaneRegistrationMessage::builder()
+                .dataplane_id(&id)
+                .endpoint(DATAPLANE_ENDPOINT)
+                .transfer_type(new_transfer_type())
+                .authorization(
+                    DataPlaneAuthorization::builder()
+                        .kind("oauth2_client_credentials")
+                        .property("tokenEndpoint", "http://keycloak:8080/token")
+                        .property("clientId", "dataplane")
+                        .property("clientSecret", "secret")
+                        .build()
+                        .unwrap(),
+                )
+                .build();
+
+            client
+                .data_planes(version)
+                .register(&registration)
+                .await
+                .unwrap();
+
+            unregister_dataplane(&client, version, &id).await;
+        }
+
+        #[rstest]
+        #[case(provider(), EdcConnectorApiVersion::V4)]
+        #[tokio::test]
+        async fn should_update_a_registered_dataplane(
+            #[case] provider: ClientParams,
+            #[case] version: EdcConnectorApiVersion,
+        ) {
+            let client = setup_client(provider, version);
+
+            let (id, transfer_type) = register_dataplane(&client, version).await;
+
+            let updated_transfer_type = new_transfer_type();
+            client
+                .data_planes(version)
+                .register(&new_dataplane_registration(&id, &updated_transfer_type))
+                .await
+                .unwrap();
+
+            let instances = client.data_planes(version).list().await.unwrap();
+            let registered = instances.iter().find(|dp| dp.id() == id).unwrap();
+
+            assert!(registered
+                .allowed_transfer_types()
+                .contains(&updated_transfer_type));
+            assert!(!registered.allowed_transfer_types().contains(&transfer_type));
+
+            unregister_dataplane(&client, version, &id).await;
+        }
+    }
+
+    mod delete {
+        use edc_connector_client::{
+            EdcConnectorApiVersion, Error, ManagementApiError, ManagementApiErrorDetailKind,
+        };
+        use reqwest::StatusCode;
+        use rstest::rstest;
+        use uuid::Uuid;
+
+        use crate::common::{
+            provider, provider_virtual_edc, register_dataplane, setup_client, ClientParams,
+        };
+
+        #[rstest]
+        #[case(provider(), EdcConnectorApiVersion::V4)]
+        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
+        #[tokio::test]
+        async fn should_delete_a_registered_dataplane(
+            #[case] provider: ClientParams,
+            #[case] version: EdcConnectorApiVersion,
+        ) {
+            let client = setup_client(provider, version);
+
+            let (id, _) = register_dataplane(&client, version).await;
+
+            let response = client.data_planes(version).delete(&id).await;
+
+            assert!(response.is_ok());
+        }
+
+        #[rstest]
+        #[case(provider(), EdcConnectorApiVersion::V4)]
+        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
+        #[tokio::test]
+        async fn should_fail_to_delete_a_dataplane_when_not_existing(
+            #[case] provider: ClientParams,
+            #[case] version: EdcConnectorApiVersion,
+        ) {
+            let client = setup_client(provider, version);
+
+            let response = client
+                .data_planes(version)
+                .delete(&Uuid::new_v4().to_string())
+                .await;
+
+            assert!(matches!(
+                response,
+                Err(Error::ManagementApi(ManagementApiError {
+                    status_code: StatusCode::NOT_FOUND,
+                    error_detail: ManagementApiErrorDetailKind::Parsed(..)
+                }))
+            ))
+        }
     }
 }

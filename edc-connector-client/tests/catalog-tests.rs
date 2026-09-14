@@ -15,12 +15,11 @@ mod catalog {
         };
 
         #[rstest]
-        #[case(consumer(), provider(), EdcConnectorApiVersion::V3)]
         #[case(consumer(), provider(), EdcConnectorApiVersion::V4)]
         #[case(
             consumer_virtual_edc(),
             provider_virtual_edc(),
-            EdcConnectorApiVersion::V4
+            EdcConnectorApiVersion::V5
         )]
         #[tokio::test]
         async fn should_get_the_catalog(
@@ -35,7 +34,7 @@ mod catalog {
             let consumer = setup_client(consumer, version);
             let provider = setup_client(provider, version);
 
-            let (asset_id, _, _) = seed(&provider).await;
+            let (asset_id, _, _) = seed(&provider, version).await;
 
             let request = CatalogRequest::builder()
                 .counter_party_address(provider_protocol_addr)
@@ -70,12 +69,11 @@ mod catalog {
         use rstest::rstest;
 
         #[rstest]
-        #[case(consumer(), provider(), EdcConnectorApiVersion::V3)]
         #[case(consumer(), provider(), EdcConnectorApiVersion::V4)]
         #[case(
             consumer_virtual_edc(),
             provider_virtual_edc(),
-            EdcConnectorApiVersion::V4
+            EdcConnectorApiVersion::V5
         )]
         #[tokio::test]
         async fn should_get_the_dataset(
@@ -89,7 +87,7 @@ mod catalog {
             let consumer = setup_client(consumer, version);
             let provider = setup_client(provider, version);
 
-            let (asset_id, _, _) = seed(&provider).await;
+            let (asset_id, _, _) = seed(&provider, version).await;
 
             let request = DatasetRequest::builder()
                 .counter_party_address(provider_protocol_addr)

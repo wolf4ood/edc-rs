@@ -15,15 +15,18 @@ mod transfer_processes {
         use uuid::Uuid;
 
         use crate::common::{
-            consumer, consumer_virtual_edc, provider, provider_2025, wait_for_transfer_state,
-            ClientParams,
+            consumer, consumer_virtual_edc, provider, provider_virtual_edc,
+            wait_for_transfer_state, ClientParams,
         };
         use crate::common::{seed_contract_agreement, setup_client};
 
         #[rstest]
-        #[case(consumer(), provider(), EdcConnectorApiVersion::V3)]
         #[case(consumer(), provider(), EdcConnectorApiVersion::V4)]
-        #[case(consumer_virtual_edc(), provider_2025(), EdcConnectorApiVersion::V4)]
+        #[case(
+            consumer_virtual_edc(),
+            provider_virtual_edc(),
+            EdcConnectorApiVersion::V5
+        )]
         #[tokio::test]
         async fn should_initiate_a_transfer_process(
             #[case] consumer_cfg: ClientParams,
@@ -33,8 +36,14 @@ mod transfer_processes {
             let provider = setup_client(provider_cfg.clone(), version);
             let consumer = setup_client(consumer_cfg.clone(), version);
 
-            let (agreement_id, _, _) =
-                seed_contract_agreement(&consumer, &consumer_cfg, &provider, &provider_cfg).await;
+            let (agreement_id, _, _) = seed_contract_agreement(
+                &consumer,
+                &consumer_cfg,
+                &provider,
+                &provider_cfg,
+                version,
+            )
+            .await;
 
             let request = TransferRequest::builder()
                 .counter_party_address(provider_cfg.protocol_address)
@@ -52,13 +61,18 @@ mod transfer_processes {
 
             assert!(response.created_at() > 0);
 
-            wait_for_transfer_state(&consumer, response.id(), TransferProcessState::Started).await;
+            wait_for_transfer_state(
+                &consumer,
+                response.id(),
+                TransferProcessState::Started,
+                version,
+            )
+            .await;
         }
 
         #[rstest]
-        #[case(provider(), EdcConnectorApiVersion::V3)]
         #[case(provider(), EdcConnectorApiVersion::V4)]
-        #[case(provider_2025(), EdcConnectorApiVersion::V4)]
+        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
         #[tokio::test]
         async fn should_fail_to_initiate_a_transfer_process_with_wrong_contract(
             #[case] consumer_cfg: ClientParams,
@@ -71,7 +85,6 @@ mod transfer_processes {
                 .protocol(consumer_cfg.protocol)
                 .contract_id(Uuid::new_v4().to_string())
                 .transfer_type("HttpData-PULL")
-                .destination(DataAddress::builder().kind("HttpProxy").build().unwrap())
                 .build();
 
             let response = consumer
@@ -91,22 +104,24 @@ mod transfer_processes {
 
     mod get {
         use crate::common::{
-            consumer, consumer_virtual_edc, provider, provider_2025, wait_for_transfer_state,
-            ClientParams,
+            consumer, consumer_virtual_edc, provider, provider_virtual_edc,
+            wait_for_transfer_state, ClientParams,
         };
         use crate::common::{seed_contract_agreement, setup_client};
         use edc_connector_client::types::{
             callback_address::CallbackAddress,
-            data_address::DataAddress,
             transfer_process::{TransferProcessKind, TransferProcessState, TransferRequest},
         };
         use edc_connector_client::EdcConnectorApiVersion;
         use rstest::rstest;
 
         #[rstest]
-        #[case(consumer(), provider(), EdcConnectorApiVersion::V3)]
         #[case(consumer(), provider(), EdcConnectorApiVersion::V4)]
-        #[case(consumer_virtual_edc(), provider_2025(), EdcConnectorApiVersion::V4)]
+        #[case(
+            consumer_virtual_edc(),
+            provider_virtual_edc(),
+            EdcConnectorApiVersion::V5
+        )]
         #[tokio::test]
         async fn should_get_a_transfer_process(
             #[case] consumer_cfg: ClientParams,
@@ -116,8 +131,14 @@ mod transfer_processes {
             let provider = setup_client(provider_cfg.clone(), version);
             let consumer = setup_client(consumer_cfg.clone(), version);
 
-            let (agreement_id, _, asset_id) =
-                seed_contract_agreement(&consumer, &consumer_cfg, &provider, &provider_cfg).await;
+            let (agreement_id, _, asset_id) = seed_contract_agreement(
+                &consumer,
+                &consumer_cfg,
+                &provider,
+                &provider_cfg,
+                version,
+            )
+            .await;
 
             let cb = CallbackAddress::builder()
                 .uri("http://localhost:80")
@@ -130,7 +151,6 @@ mod transfer_processes {
                 .contract_id(&agreement_id)
                 .transfer_type("HttpData-PULL")
                 .callback_address(cb.clone())
-                .destination(DataAddress::builder().kind("HttpProxy").build().unwrap())
                 .build();
 
             let response = consumer
@@ -141,7 +161,13 @@ mod transfer_processes {
 
             assert!(response.created_at() > 0);
 
-            wait_for_transfer_state(&consumer, response.id(), TransferProcessState::Started).await;
+            wait_for_transfer_state(
+                &consumer,
+                response.id(),
+                TransferProcessState::Started,
+                version,
+            )
+            .await;
 
             let tp = consumer
                 .transfer_processes(version)
@@ -149,16 +175,12 @@ mod transfer_processes {
                 .await
                 .unwrap();
 
+            dbg!(&tp);
+
             assert_eq!(response.id(), tp.id());
             assert_eq!("HttpData-PULL", tp.transfer_type());
             assert_eq!(asset_id, tp.asset_id());
             assert_eq!(agreement_id, tp.contract_id());
-            assert_eq!(
-                "HttpProxy",
-                tp.data_destination()
-                    .and_then(|destination| destination.property::<String>("type").unwrap())
-                    .unwrap()
-            );
 
             assert_eq!(&TransferProcessKind::Consumer, tp.kind());
             assert!(tp.state_timestamp() > 0);
@@ -169,8 +191,8 @@ mod transfer_processes {
 
     mod query {
         use crate::common::{
-            consumer, consumer_virtual_edc, provider, provider_2025, seed_contract_agreement,
-            setup_client, wait_for_transfer_state, ClientParams,
+            consumer, consumer_virtual_edc, provider, provider_virtual_edc,
+            seed_contract_agreement, setup_client, wait_for_transfer_state, ClientParams,
         };
         use edc_connector_client::types::{
             data_address::DataAddress,
@@ -181,9 +203,12 @@ mod transfer_processes {
         use rstest::rstest;
 
         #[rstest]
-        #[case(consumer(), provider(), EdcConnectorApiVersion::V3)]
         #[case(consumer(), provider(), EdcConnectorApiVersion::V4)]
-        #[case(consumer_virtual_edc(), provider_2025(), EdcConnectorApiVersion::V4)]
+        #[case(
+            consumer_virtual_edc(),
+            provider_virtual_edc(),
+            EdcConnectorApiVersion::V5
+        )]
         #[tokio::test]
         async fn should_query_transfer_processes(
             #[case] consumer_cfg: ClientParams,
@@ -193,8 +218,14 @@ mod transfer_processes {
             let provider = setup_client(provider_cfg.clone(), version);
             let consumer = setup_client(consumer_cfg.clone(), version);
 
-            let (agreement_id, _, asset_id) =
-                seed_contract_agreement(&consumer, &consumer_cfg, &provider, &provider_cfg).await;
+            let (agreement_id, _, asset_id) = seed_contract_agreement(
+                &consumer,
+                &consumer_cfg,
+                &provider,
+                &provider_cfg,
+                version,
+            )
+            .await;
 
             let request = TransferRequest::builder()
                 .counter_party_address(provider_cfg.protocol_address)
@@ -212,7 +243,13 @@ mod transfer_processes {
 
             assert!(response.created_at() > 0);
 
-            wait_for_transfer_state(&consumer, response.id(), TransferProcessState::Started).await;
+            wait_for_transfer_state(
+                &consumer,
+                response.id(),
+                TransferProcessState::Started,
+                version,
+            )
+            .await;
 
             let processes = consumer
                 .transfer_processes(version)
@@ -226,8 +263,8 @@ mod transfer_processes {
 
     mod terminate {
         use crate::common::{
-            consumer, consumer_virtual_edc, provider, provider_2025, seed_contract_agreement,
-            setup_client, wait_for_transfer_state, ClientParams,
+            consumer, consumer_virtual_edc, provider, provider_virtual_edc,
+            seed_contract_agreement, setup_client, wait_for_transfer_state, ClientParams,
         };
         use edc_connector_client::types::{
             data_address::DataAddress,
@@ -237,9 +274,12 @@ mod transfer_processes {
         use rstest::rstest;
 
         #[rstest]
-        #[case(consumer(), provider(), EdcConnectorApiVersion::V3)]
         #[case(consumer(), provider(), EdcConnectorApiVersion::V4)]
-        #[case(consumer_virtual_edc(), provider_2025(), EdcConnectorApiVersion::V4)]
+        #[case(
+            consumer_virtual_edc(),
+            provider_virtual_edc(),
+            EdcConnectorApiVersion::V5
+        )]
         #[tokio::test]
         async fn should_terminate_transfer_processes(
             #[case] consumer_cfg: ClientParams,
@@ -249,8 +289,14 @@ mod transfer_processes {
             let provider = setup_client(provider_cfg.clone(), version);
             let consumer = setup_client(consumer_cfg.clone(), version);
 
-            let (agreement_id, _, _) =
-                seed_contract_agreement(&consumer, &consumer_cfg, &provider, &provider_cfg).await;
+            let (agreement_id, _, _) = seed_contract_agreement(
+                &consumer,
+                &consumer_cfg,
+                &provider,
+                &provider_cfg,
+                version,
+            )
+            .await;
 
             let request = TransferRequest::builder()
                 .counter_party_address(provider_cfg.protocol_address)
@@ -268,7 +314,13 @@ mod transfer_processes {
 
             assert!(response.created_at() > 0);
 
-            wait_for_transfer_state(&consumer, response.id(), TransferProcessState::Started).await;
+            wait_for_transfer_state(
+                &consumer,
+                response.id(),
+                TransferProcessState::Started,
+                version,
+            )
+            .await;
 
             consumer
                 .transfer_processes(version)
@@ -276,8 +328,13 @@ mod transfer_processes {
                 .await
                 .unwrap();
 
-            wait_for_transfer_state(&consumer, response.id(), TransferProcessState::Terminated)
-                .await;
+            wait_for_transfer_state(
+                &consumer,
+                response.id(),
+                TransferProcessState::Terminated,
+                version,
+            )
+            .await;
         }
     }
 
@@ -294,7 +351,6 @@ mod transfer_processes {
         use rstest::rstest;
 
         #[rstest]
-        #[case(consumer(), provider(), EdcConnectorApiVersion::V3)]
         #[case(consumer(), provider(), EdcConnectorApiVersion::V4)]
         #[tokio::test]
         async fn should_suspend_and_resume_transfer_processes(
@@ -305,8 +361,14 @@ mod transfer_processes {
             let provider = setup_client(provider_cfg.clone(), version);
             let consumer = setup_client(consumer_cfg.clone(), version);
 
-            let (agreement_id, _, _) =
-                seed_contract_agreement(&consumer, &consumer_cfg, &provider, &provider_cfg).await;
+            let (agreement_id, _, _) = seed_contract_agreement(
+                &consumer,
+                &consumer_cfg,
+                &provider,
+                &provider_cfg,
+                version,
+            )
+            .await;
 
             let request = TransferRequest::builder()
                 .counter_party_address(provider_cfg.protocol_address)
@@ -324,7 +386,13 @@ mod transfer_processes {
 
             assert!(response.created_at() > 0);
 
-            wait_for_transfer_state(&consumer, response.id(), TransferProcessState::Started).await;
+            wait_for_transfer_state(
+                &consumer,
+                response.id(),
+                TransferProcessState::Started,
+                version,
+            )
+            .await;
 
             consumer
                 .transfer_processes(version)
@@ -332,8 +400,13 @@ mod transfer_processes {
                 .await
                 .unwrap();
 
-            wait_for_transfer_state(&consumer, response.id(), TransferProcessState::Suspended)
-                .await;
+            wait_for_transfer_state(
+                &consumer,
+                response.id(),
+                TransferProcessState::Suspended,
+                version,
+            )
+            .await;
 
             consumer
                 .transfer_processes(version)
@@ -341,7 +414,13 @@ mod transfer_processes {
                 .await
                 .unwrap();
 
-            wait_for_transfer_state(&consumer, response.id(), TransferProcessState::Started).await;
+            wait_for_transfer_state(
+                &consumer,
+                response.id(),
+                TransferProcessState::Started,
+                version,
+            )
+            .await;
         }
     }
 }

@@ -11,9 +11,8 @@ mod create {
     use crate::common::{provider, provider_virtual_edc, setup_client, ClientParams};
 
     #[rstest]
-    #[case(provider(), EdcConnectorApiVersion::V3)]
     #[case(provider(), EdcConnectorApiVersion::V4)]
-    #[case(provider_virtual_edc(), EdcConnectorApiVersion::V4)]
+    #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
     #[tokio::test]
     async fn should_create_a_policy_definition(
         #[case] provider: ClientParams,
@@ -29,7 +28,7 @@ mod create {
             .build();
 
         let response = client
-            .policies(EdcConnectorApiVersion::V4)
+            .policies(version)
             .create(&policy_definition)
             .await
             .unwrap();
@@ -39,11 +38,10 @@ mod create {
     }
 
     #[rstest]
-    #[case(provider(), EdcConnectorApiVersion::V3)]
     #[case(provider(), EdcConnectorApiVersion::V4)]
-    #[case(provider_virtual_edc(), EdcConnectorApiVersion::V4)]
+    #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
     #[tokio::test]
-    async fn should_failt_to_create_an_policy_definition_when_existing(
+    async fn should_fail_to_create_an_policy_definition_when_existing(
         #[case] provider: ClientParams,
         #[case] version: EdcConnectorApiVersion,
     ) {
@@ -88,9 +86,8 @@ mod delete {
     use crate::common::{provider, provider_virtual_edc, setup_client, ClientParams};
 
     #[rstest]
-    #[case(provider(), EdcConnectorApiVersion::V3)]
     #[case(provider(), EdcConnectorApiVersion::V4)]
-    #[case(provider_virtual_edc(), EdcConnectorApiVersion::V4)]
+    #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
     #[tokio::test]
     async fn should_delete_a_policy_definition(
         #[case] provider: ClientParams,
@@ -115,9 +112,8 @@ mod delete {
     }
 
     #[rstest]
-    #[case(provider(), EdcConnectorApiVersion::V3)]
     #[case(provider(), EdcConnectorApiVersion::V4)]
-    #[case(provider_virtual_edc(), EdcConnectorApiVersion::V4)]
+    #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
     #[tokio::test]
     async fn should_fail_to_delete_policy_definition_when_not_existing(
         #[case] provider: ClientParams,
@@ -153,9 +149,8 @@ mod get {
     use crate::common::{provider, provider_virtual_edc, setup_client, ClientParams};
 
     #[rstest]
-    #[case(provider(), EdcConnectorApiVersion::V3)]
     #[case(provider(), EdcConnectorApiVersion::V4)]
-    #[case(provider_virtual_edc(), EdcConnectorApiVersion::V4)]
+    #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
     #[tokio::test]
     async fn should_get_a_policy_definition(
         #[case] provider: ClientParams,
@@ -197,40 +192,21 @@ mod get {
 
         let constraint = &permission.constraints()[0];
 
-        match version {
-            EdcConnectorApiVersion::V3 => {
-                assert_eq!(permission.action().id(), "odrl:use");
+        assert_eq!(permission.action().id(), "use");
 
-                assert_eq!(
-                    constraint,
-                    &Constraint::Atomic(AtomicConstraint::new_with_operator(
-                        "edc:foo",
-                        Operator::id("odrl:eq"),
-                        "bar"
-                    ))
-                );
-            }
-            EdcConnectorApiVersion::V4Alpha
-            | EdcConnectorApiVersion::V4
-            | EdcConnectorApiVersion::V5Beta => {
-                assert_eq!(permission.action().id(), "use");
-
-                assert_eq!(
-                    constraint,
-                    &Constraint::Atomic(AtomicConstraint::new_with_operator(
-                        LeftOperand::simple("foo"),
-                        Operator::simple("eq"),
-                        "bar"
-                    ))
-                );
-            }
-        }
+        assert_eq!(
+            constraint,
+            &Constraint::Atomic(AtomicConstraint::new_with_operator(
+                LeftOperand::simple("foo"),
+                Operator::simple("eq"),
+                "bar"
+            ))
+        );
     }
 
     #[rstest]
-    #[case(provider(), EdcConnectorApiVersion::V3)]
     #[case(provider(), EdcConnectorApiVersion::V4)]
-    #[case(provider_virtual_edc(), EdcConnectorApiVersion::V4)]
+    #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
     #[tokio::test]
     async fn should_fail_to_get_a_policy_definition_when_not_existing(
         #[case] provider: ClientParams,
@@ -263,9 +239,8 @@ mod update {
     use crate::common::{provider, provider_virtual_edc, setup_client, ClientParams};
 
     #[rstest]
-    #[case(provider(), EdcConnectorApiVersion::V3)]
     #[case(provider(), EdcConnectorApiVersion::V4)]
-    #[case(provider_virtual_edc(), EdcConnectorApiVersion::V4)]
+    #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
     #[tokio::test]
     async fn should_update_policy_definition(
         #[case] provider: ClientParams,
@@ -295,19 +270,14 @@ mod update {
             .await
             .unwrap();
 
-        let definition = client
-            .policies(EdcConnectorApiVersion::V4)
-            .get(&id)
-            .await
-            .unwrap();
+        let definition = client.policies(version).get(&id).await.unwrap();
 
         assert_eq!(1, definition.policy().permissions().len());
     }
 
     #[rstest]
-    #[case(provider(), EdcConnectorApiVersion::V3)]
     #[case(provider(), EdcConnectorApiVersion::V4)]
-    #[case(provider_virtual_edc(), EdcConnectorApiVersion::V4)]
+    #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
     #[tokio::test]
     async fn should_fail_to_update_an_policy_definition_when_not_existing(
         #[case] provider: ClientParams,
@@ -348,9 +318,8 @@ mod query {
     use uuid::Uuid;
 
     #[rstest]
-    #[case(provider(), EdcConnectorApiVersion::V3)]
     #[case(provider(), EdcConnectorApiVersion::V4)]
-    #[case(provider_virtual_edc(), EdcConnectorApiVersion::V4)]
+    #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
     #[tokio::test]
     async fn should_query_policy_definitions(
         #[case] provider: ClientParams,

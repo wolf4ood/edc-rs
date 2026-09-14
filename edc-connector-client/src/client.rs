@@ -186,12 +186,10 @@ impl EdcConnectorClientInternal {
     pub(crate) fn path_for_target(
         &self,
         target: ApiTarget,
-        mut version: EdcConnectorApiVersion,
+        version: EdcConnectorApiVersion,
         paths: &[&str],
     ) -> String {
         let base: &[&str] = if let Some(participant_context) = &self.participant_context {
-            version = EdcConnectorApiVersion::V4Alpha;
-
             match target {
                 ApiTarget::Participant => &[
                     self.management_url.as_str(),
@@ -237,6 +235,7 @@ impl EdcConnectorClientInternal {
             EdcConnectorApiVersion::V4Alpha => WithContextRef::edc_v4_context(body),
             EdcConnectorApiVersion::V4 => WithContextRef::edc_v4_context(body),
             EdcConnectorApiVersion::V5Beta => WithContextRef::edc_v4_context(body),
+            EdcConnectorApiVersion::V5 => WithContextRef::edc_v4_context(body),
         }
     }
 }
