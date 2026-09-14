@@ -5,7 +5,10 @@ mod assets {
 
     mod create {
         use edc_connector_client::{
-            types::{asset::NewAsset, data_address::DataAddress},
+            types::{
+                asset::{DataplaneMetadata, NewAsset},
+                data_address::DataAddress,
+            },
             EdcConnectorApiVersion, Error, ManagementApiError, ManagementApiErrorDetailKind,
         };
         use reqwest::StatusCode;
@@ -70,6 +73,47 @@ mod assets {
                     error_detail: ManagementApiErrorDetailKind::Parsed(..)
                 }))
             ))
+        }
+
+        #[rstest]
+        #[case(provider(), EdcConnectorApiVersion::V4)]
+        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
+        #[tokio::test]
+        async fn should_create_an_asset_with_dataplane_metadata(
+            #[case] provider: ClientParams,
+            #[case] version: EdcConnectorApiVersion,
+        ) {
+            let client = setup_client(provider, version);
+
+            let id = Uuid::new_v4().to_string();
+
+            let asset = NewAsset::builder()
+                .id(&id)
+                .property("foo", "bar")
+                .dataplane_metadata(
+                    DataplaneMetadata::builder()
+                        .label("label1")
+                        .labels(["label2"])
+                        .profile("http-profile")
+                        .property("key", "value")
+                        .build(),
+                )
+                .build();
+
+            let response = client.assets(version).create(&asset).await.unwrap();
+
+            assert_eq!(&id, response.id());
+
+            let asset = client.assets(version).get(&id).await.unwrap();
+
+            let metadata = asset.dataplane_metadata().unwrap();
+
+            assert_eq!(metadata.labels(), ["label1", "label2"]);
+            assert_eq!(metadata.profiles(), ["http-profile"]);
+            assert_eq!(
+                Some("value".to_string()),
+                metadata.property::<String>("key").unwrap()
+            );
         }
     }
 
@@ -231,7 +275,7 @@ mod assets {
     mod update {
         use edc_connector_client::{
             types::{
-                asset::{Asset, NewAsset},
+                asset::{Asset, DataplaneMetadata, NewAsset},
                 data_address::DataAddress,
             },
             EdcConnectorApiVersion, Error, ManagementApiError, ManagementApiErrorDetailKind,
@@ -299,6 +343,57 @@ mod assets {
                     error_detail: ManagementApiErrorDetailKind::Parsed(..)
                 }))
             ))
+        }
+
+        #[rstest]
+        #[case(provider(), EdcConnectorApiVersion::V4)]
+        #[case(provider_virtual_edc(), EdcConnectorApiVersion::V5)]
+        #[tokio::test]
+        async fn should_update_an_asset_dataplane_metadata(
+            #[case] provider: ClientParams,
+            #[case] version: EdcConnectorApiVersion,
+        ) {
+            let client = setup_client(provider, version);
+            let id = Uuid::new_v4().to_string();
+            let new_asset = NewAsset::builder()
+                .id(&id)
+                .property("foo", "bar")
+                .dataplane_metadata(
+                    DataplaneMetadata::builder()
+                        .label("label1")
+                        .profile("http-profile")
+                        .build(),
+                )
+                .build();
+
+            client.assets(version).create(&new_asset).await.unwrap();
+
+            let updated_asset = Asset::builder()
+                .id(&id)
+                .property("foo", "bar2")
+                .dataplane_metadata(
+                    DataplaneMetadata::builder()
+                        .label("updated-label")
+                        .profile("updated-profile")
+                        .property("key", "value")
+                        .build(),
+                )
+                .build();
+
+            client.assets(version).update(&updated_asset).await.unwrap();
+
+            let asset = client.assets(version).get(&id).await.unwrap();
+
+            assert_eq!("bar2", asset.property::<String>("foo").unwrap().unwrap());
+
+            let metadata = asset.dataplane_metadata().unwrap();
+
+            assert_eq!(metadata.labels(), ["updated-label"]);
+            assert_eq!(metadata.profiles(), ["updated-profile"]);
+            assert_eq!(
+                Some("value".to_string()),
+                metadata.property::<String>("key").unwrap()
+            );
         }
     }
 

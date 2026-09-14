@@ -88,6 +88,30 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ```
 
 
+#### Creating an asset with dataplane metadata
+
+`dataplaneMetadata` replaces the deprecated `dataAddress` on assets (EDC 0.18+). Labels and
+profiles are used to select a data plane, while properties are handed over to it.
+
+```rust
+use edc_connector_client::types::asset::{DataplaneMetadata, NewAsset};
+
+let asset = NewAsset::builder()
+    .id("1")
+    .property("description", "An asset")
+    .dataplane_metadata(
+        DataplaneMetadata::builder()
+            .label("http")
+            .profile("http-profile")
+            .property("baseUrl", "https://example.com/data")
+            .build(),
+    )
+    .build();
+
+let response = client.assets().create(&asset).await?;
+```
+
+
 ### Development
 
 

@@ -45,6 +45,10 @@ impl Properties {
     pub fn contains(&self, property: &str) -> bool {
         self.0.contains_key(property)
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
 }
 
 impl PropertyValue {
