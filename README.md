@@ -88,6 +88,40 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ```
 
 
+#### Authentication
+
+The client supports these mechanisms via `Auth`:
+
+- `Auth::api_token("...")` sends the token in the `X-Api-Key` header.
+- `Auth::bearer_token("...")` sends a fixed `Authorization: Bearer` token.
+- `Auth::oauth(OAuth2Config)` obtains a token with the OAuth2 client credentials grant and refreshes it when it expires.
+- `Auth::token_exchange(TokenExchangeConfig)` exchanges a workload credential (e.g. a projected Kubernetes
+  ServiceAccount token) at an RFC 8693 token exchange broker for a short-lived scoped token, as described in the
+  [JAD token exchange spec](https://github.com/eclipse-dataspace-hub/jad/blob/main/docs/token-exchange.md).
+  The exchanged token is cached until it expires and the credential file is re-read on every exchange, so
+  rotation is picked up. No client credentials are sent: the subject token is the sole proof of identity.
+
+```rust
+use edc_connector_client::{Auth, EdcConnectorClient, SubjectToken, TokenExchangeConfig};
+
+let auth = Auth::token_exchange(
+    TokenExchangeConfig::builder()
+        .token_exchange_url("http://jwtlet.edc-v.svc.cluster.local:8080/token")
+        .subject_token(SubjectToken::file("/var/run/secrets/jwtlet/token"))
+        .resource("<participant-context-id>") // becomes the `sub` claim
+        .audience("edcv") // default
+        .scopes(vec!["management-api:assets:read".to_string()])
+        .build(),
+)?;
+
+let client = EdcConnectorClient::builder()
+    .management_url("http://myedc")
+    .with_auth(auth)
+    .participant_context("<participant-context-id>")
+    .build()?;
+```
+
+
 #### Creating an asset with dataplane metadata
 
 `dataplaneMetadata` replaces the deprecated `dataAddress` on assets (EDC 0.18+). Labels and

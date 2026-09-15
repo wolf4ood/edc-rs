@@ -11,7 +11,7 @@ readme = "README.md"
 
 [dependencies]
 reqwest = { version = "0.12.25", features = ["json"]}
-tokio = { workspace = true, features = ["sync"] }
+tokio = { workspace = true, features = ["sync", "fs"] }
 oauth2 = "5.0.0"
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -23,6 +23,7 @@ bon = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
 uuid = { workspace = true, features = ["v4"] }
 rstest = "0.27.0"
+wiremock = "0.6.5"
 
 [lints]
 workspace = true
